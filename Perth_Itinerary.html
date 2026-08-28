@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Perth Travel Master Itinerary & Planner</title>
+  <meta name="description" content="Professional offline reactive itinerary table and travel manager for Perth, Western Australia." />
+  <meta name="theme-color" content="#0b132b" />
+
+  <style>
+    /* ==========================================================================
+       1. DESIGN SYSTEM TOKENS & RESET
+       ========================================================================== */
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      
+      /* Dark Theme (Default) - Sophisticated Navy & Ochre */
+      --bg-body: #080d1a;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-surface-hover: #27354f;
+      --bg-glass: rgba(15, 23, 42, 0.85);
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.16);
+      --border-accent: rgba(14, 165, 233, 0.4);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      /* Semantic Color Scale */
+      --accent-ocean: #0284c7;
+      --accent-ocean-light: #38bdf8;
+      --accent-ocean-glow: rgba(56, 189, 248, 0.18);
+      
+      --accent-gold: #d97706;
+      --accent-gold-light: #fbbf24;
+      --accent-gold-glow: rgba(251, 191, 36, 0.18);
+      
+      --accent-emerald: #059669;
+      --accent-emerald-light: #34d399;
+      --accent-emerald-glow: rgba(52, 211, 153, 0.18);
+      
+      --accent-purple: #7c3aed;
+      --accent-purple-light: #a78bfa;
+      
+      --accent-rose: #e11d48;
+      --accent-rose-light: #fb7185;
+      
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+      
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="light"] {
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f1f5f9;
+      --bg-surface-hover: #e2e8f0;
+      --bg-glass: rgba(255, 255, 255, 0.9);
+      
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-medium: rgba(0, 0, 0, 0.14);
+      --border-accent: rgba(2, 132, 199, 0.3);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 80px;
+      transition: background-color var(--transition), color var(--transition);
+      overflow-x: hidden;
+    }
+
+    /* Ambient Subtle Background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 380px;
+      background: radial-gradient(circle at 50% -80px, var(--accent-ocean-glow), transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* SVG Icon Helper */
+    .icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.15em;
+      height: 1.15em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    /* ==========================================================================
+       2. TOP NAVIGATION BAR
+       ========================================================================== */
+    .app-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: var(--bg-glass);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--accent-ocean), var(--accent-gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand-titles h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .brand-meta {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.84rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-sm {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+    }
+
+    .btn-primary {
+      background: var(--accent-ocean);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: var(--accent-ocean-light);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--accent-ocean-glow);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      color: var(--text-main);
+      border-color: var(--border-subtle);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-medium);
+    }
+
+    .btn-success {
+      background: var(--accent-emerald);
+      color: #ffffff;
+    }
+    .btn-success:hover {
+      background: var(--accent-emerald-light);
+    }
+
+    .btn-danger {
+      background: rgba(225, 29, 72, 0.12);
+      color: var(--accent-rose-light);
+      border-color: rgba(225, 29, 72, 0.25);
+    }
+    .btn-danger:hover {
+      background: var(--accent-rose);
+      color: #ffffff;
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: var(--radius-md);
+    }
+
+    /* ==========================================================================
+       3. MAIN CONTAINER & DASHBOARD SUMMARY
+       ========================================================================== */
+    .main-wrapper {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-header {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dashboard-top-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .header-info-block h2 {
+      font-size: 1.45rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-info-block p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .metric-box {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .metric-icon-wrap {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent-ocean-light);
+    }
+
+    .metric-value {
+      font-size: 1.25rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+
+    /* Overall Progress Bar */
+    .progress-bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-surface-elevated);
+      border-radius: var(--radius-full);
+      margin-top: 20px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-ocean), var(--accent-emerald-light));
+      border-radius: var(--radius-full);
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    /* ==========================================================================
+       4. CONTROLS, VIEW TOGGLE & SEARCH
+       ========================================================================== */
+    .controls-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      padding: 12px 18px;
+      border-radius: var(--radius-md);
+    }
+
+    .search-filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 260px;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-input-wrapper .icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 12px 8px 36px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-ocean);
+    }
+
+    .filter-select {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .view-switcher-group {
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface-elevated);
+      padding: 3px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .view-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+
+    .view-btn.active {
+      background: var(--accent-ocean);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ==========================================================================
+       5. REACTIVE ITINERARY TABLE VIEW (ENHANCED DOCX TABLE)
+       ========================================================================== */
+    .table-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .itinerary-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+      min-width: 900px;
+    }
+
+    .itinerary-table thead th {
+      background: var(--bg-surface-elevated);
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    .itinerary-table tbody tr.day-row {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background-color var(--transition);
+    }
+
+    .itinerary-table tbody tr.day-row:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    .itinerary-table td {
+      padding: 18px;
+      vertical-align: top;
+    }
+
+    /* Cell Styles */
+    .cell-date {
+      width: 140px;
+      white-space: nowrap;
+    }
+
+    .date-badge {
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      display: block;
+    }
+
+    .day-name {
+      font-size: 0.78rem;
+      color: var(--accent-ocean-light);
+      font-weight: 600;
+      display: block;
+      margin-top: 2px;
+    }
+
+    .cell-place {
+      width: 180px;
+    }
+
+    .place-title {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      line-height: 1.3;
+    }
+
+    .drive-time-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      background: rgba(217, 119, 6, 0.15);
+      color: var(--accent-gold-light);
+      padding: 2px 7px;
+      border-radius: var(--radius-sm);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .cell-activities {
+      min-width: 320px;
+    }
+
+    .activities-sublist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .activity-item-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      transition: var(--transition);
+    }
+
+    .activity-item-row:hover {
+      border-color: var(--border-medium);
+    }
+
+    .activity-item-row.done {
+      opacity: 0.6;
+    }
+    .activity-item-row.done .act-title {
+      text-decoration: line-through;
+    }
+
+    .custom-check {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--text-dim);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+    .custom-check:checked {
+      background: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+    }
+    .custom-check:checked::after {
+      content: '';
+      width: 4px;
+      height: 8px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .act-content {
+      flex: 1;
+    }
+
+    .act-header-inline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .act-title {
+      font-weight: 600;
+      color: var(--text-main);
+      font-size: 0.85rem;
+    }
+
+    .act-time-pill {
+      font-size: 0.72rem;
+      color: var(--accent-gold-light);
+      font-weight: 600;
+      background: rgba(217, 119, 6, 0.12);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .act-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      line-height: 1.35;
+    }
+
+    .act-actions-inline {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      opacity: 0.4;
+      transition: opacity var(--transition);
+    }
+    .activity-item-row:hover .act-actions-inline {
+      opacity: 1;
+    }
+
+    .btn-act-icon {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-act-icon:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+    .btn-act-icon.delete:hover {
+      color: var(--accent-rose-light);
+    }
+
+    .cell-notes {
+      width: 220px;
+    }
+
+    .notes-box {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .solat-highlight-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--accent-emerald-light);
+      background: var(--accent-emerald-glow);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    .cell-stay {
+      width: 130px;
+    }
+
+    .stay-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-purple-light);
+      background: rgba(124, 58, 237, 0.12);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid rgba(124, 58, 237, 0.25);
+    }
+
+    .cell-actions {
+      width: 100px;
+      text-align: right;
+    }
+
+    .row-actions-group {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    /* Add Activity Row Button */
+    .btn-add-activity-row {
+      width: 100%;
+      margin-top: 8px;
+      padding: 6px;
+      background: transparent;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--accent-ocean-light);
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: var(--transition);
+    }
+    .btn-add-activity-row:hover {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--accent-ocean);
+    }
+
+    /* ==========================================================================
+       6. TIMELINE / CARDS VIEW (ALTERNATIVE VIEW)
+       ========================================================================== */
+    .timeline-view {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .timeline-view.active {
+      display: flex;
+    }
+
+    .day-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .day-card-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .day-card-title-group h3 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ==========================================================================
+       7. MODALS (ADD / EDIT DAY & ACTIVITY)
+       ========================================================================== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-medium);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      animation: modalPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    @keyframes modalPop {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 18px 24px;
+      background: var(--bg-surface-elevated);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-input, .form-textarea, .form-select-modal {
+      width: 100%;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-textarea:focus, .form-select-modal:focus {
+      outline: none;
+      border-color: var(--accent-ocean);
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      background: var(--bg-surface-elevated);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* Toast Notification */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 2000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--accent-ocean);
+      color: var(--text-main);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      font-size: 0.84rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: toastIn 0.25s ease forwards;
+    }
+
+    @keyframes toastIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* ==========================================================================
+       8. PRINT / EXPORT STYLESHEET (CLEAN A4 DOCUMENT)
+       ========================================================================== */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+      }
+
+      body::before {
+        display: none !important;
+      }
+
+      .app-nav, .controls-toolbar, .btn, .btn-act-icon, .btn-add-activity-row, 
+      .modal-overlay, .toast-container, .custom-check {
+        display: none !important;
+      }
+
+      .main-wrapper {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .dashboard-header {
+        background: #ffffff !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        page-break-after: avoid;
+      }
+
+      .metric-box {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+      }
+
+      .metric-value, .metric-label {
+        color: #0f172a !important;
+      }
+
+      .table-card {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+      }
+
+      .itinerary-table thead th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-bottom: 2px solid #cbd5e1 !important;
+      }
+
+      .itinerary-table td {
+        border-bottom: 1px solid #e2e8f0 !important;
+      }
+
+      .day-row {
+        page-break-inside: avoid;
+      }
+
+      .activity-item-row {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+      }
+
+      .stay-badge, .solat-highlight-badge, .drive-time-badge {
+        border: 1px solid #cbd5e1 !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG ICON SYSTEM SYMBOLS (ZERO EMOJIS) -->
+  <svg style="display: none;">
+    <symbol id="icon-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+    </symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </symbol>
+    <symbol id="icon-map-pin" viewBox="0 0 24 24">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </symbol>
+    <symbol id="icon-printer" viewBox="0 0 24 24">
+      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+      <rect x="6" y="14" width="12" height="8"></rect>
+    </symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24">
+      <polyline points="23 4 23 10 17 10"></polyline>
+      <polyline points="1 20 1 14 7 14"></polyline>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+    </symbol>
+    <symbol id="icon-search" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </symbol>
+    <symbol id="icon-table" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="3" y1="15" x2="21" y2="15"></line>
+      <line x1="12" y1="3" x2="12" y2="21"></line>
+    </symbol>
+    <symbol id="icon-layout" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="9" y1="21" x2="9" y2="9"></line>
+    </symbol>
+    <symbol id="icon-mosque" viewBox="0 0 24 24">
+      <path d="M12 3c-1.5 2-3 3.5-3 5.5a3 3 0 0 0 6 0c0-2-1.5-3.5-3-5.5z"></path>
+      <path d="M4 10v11h16V10"></path>
+      <path d="M9 21v-6a3 3 0 0 1 6 0v6"></path>
+    </symbol>
+    <symbol id="icon-car" viewBox="0 0 24 24">
+      <rect x="2" y="10" width="20" height="8" rx="2"></rect>
+      <path d="M5 10l2-5h10l2 5"></path>
+      <circle cx="7" cy="18" r="2"></circle>
+      <circle cx="17" cy="18" r="2"></circle>
+    </symbol>
+    <symbol id="icon-external" viewBox="0 0 24 24">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+      <polyline points="15 3 21 3 21 9"></polyline>
+      <line x1="10" y1="14" x2="21" y2="3"></line>
+    </symbol>
+  </svg>
+
+  <!-- TOP STICKY NAVIGATION -->
+  <nav class="app-nav">
+    <div class="brand-section">
+      <div class="brand-logo-badge">
+        <svg class="icon"><use href="#icon-compass"></use></svg>
+      </div>
+      <div class="brand-titles">
+        <h1>Perth Master Itinerary</h1>
+        <div class="brand-meta">
+          <span>28 Aug – 5 Sep 2026</span>
+          <span>•</span>
+          <span id="navCountdownText">Loading...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn btn-primary btn-sm" id="btnAddDayBtn">
+        <svg class="icon"><use href="#icon-plus"></use></svg>
+        <span>Add Day</span>
+      </button>
+
+      <button class="btn btn-secondary btn-sm" id="btnExportPdf" title="Print or Export A4 PDF">
+        <svg class="icon"><use href="#icon-printer"></use></svg>
+        <span>Print PDF</span>
+      </button>
+
+      <button class="btn btn-secondary btn-sm" id="btnBackupJson" title="Backup all data to JSON">
+        <svg class="icon"><use href="#icon-download"></use></svg>
+        <span>Backup</span>
+      </button>
+
+      <button class="btn btn-secondary btn-sm" id="btnRestoreJson" title="Restore data from JSON">
+        <svg class="icon"><use href="#icon-upload"></use></svg>
+        <span>Restore</span>
+      </button>
+      <input type="file" id="restoreFileInput" accept=".json" style="display: none;" />
+
+      <button class="btn btn-secondary btn-icon" id="themeToggleBtn" title="Toggle Light/Dark Theme">
+        <svg class="icon" id="themeIcon"><use href="#icon-moon"></use></svg>
+      </button>
+
+      <button class="btn btn-secondary btn-icon" id="btnResetDefault" title="Reset to Original Template">
+        <svg class="icon"><use href="#icon-refresh"></use></svg>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTAINER -->
+  <main class="main-wrapper">
+
+    <!-- DASHBOARD SUMMARY -->
+    <section class="dashboard-header">
+      <div class="dashboard-top-row">
+        <div class="header-info-block">
+          <h2>
+            <svg class="icon" style="color: var(--accent-ocean-light);"><use href="#icon-compass"></use></svg>
+            Western Australia Expedition
+          </h2>
+          <p>Reactive travel schedule with live checklist, timing badges, drive estimates, and solat points.</p>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <span id="statusSyncBadge" class="solat-highlight-badge" style="background: rgba(56,189,248,0.12); color: var(--accent-ocean-light);">
+            <svg class="icon"><use href="#icon-check"></use></svg> Auto-Saved Offline
+          </span>
+        </div>
+      </div>
+
+      <!-- Live Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-icon-wrap"><svg class="icon"><use href="#icon-calendar"></use></svg></div>
+          <div>
+            <div class="metric-value" id="metricTotalDays">9</div>
+            <div class="metric-label">Total Days</div>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap" style="color: var(--accent-emerald-light);"><svg class="icon"><use href="#icon-check"></use></svg></div>
+          <div>
+            <div class="metric-value" id="metricDoneActivities">0 / 28</div>
+            <div class="metric-label">Completed</div>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap" style="color: var(--accent-gold-light);"><svg class="icon"><use href="#icon-car"></use></svg></div>
+          <div>
+            <div class="metric-value" id="metricEstDrive">~1,150 km</div>
+            <div class="metric-label">Est. Distance</div>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap" style="color: var(--accent-purple-light);"><svg class="icon"><use href="#icon-moon"></use></svg></div>
+          <div>
+            <div class="metric-value">5:55 PM</div>
+            <div class="metric-label">Golden Sunset</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Progress Track -->
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="mainProgressFill"></div>
+      </div>
+    </section>
+
+    <!-- CONTROLS & SEARCH BAR -->
+    <div class="controls-toolbar">
+      <div class="search-filter-group">
+        <div class="search-input-wrapper">
+          <svg class="icon"><use href="#icon-search"></use></svg>
+          <input type="text" id="filterSearchInput" class="search-input" placeholder="Search places, activities, or notes..." />
+        </div>
+
+        <select id="categoryFilterSelect" class="filter-select">
+          <option value="all">All Categories</option>
+          <option value="must">Must-Visit Spots</option>
+          <option value="wildlife">Wildlife & Nature</option>
+          <option value="solat">Mosques & Solat</option>
+          <option value="food">Food & Chocolate</option>
+          <option value="shopping">Shopping</option>
+          <option value="transport">Flight / Transport</option>
+        </select>
+      </div>
+
+      <div class="view-switcher-group">
+        <button class="view-btn active" id="viewTableBtn">
+          <svg class="icon"><use href="#icon-table"></use></svg>
+          <span>Table View</span>
+        </button>
+        <button class="view-btn" id="viewCardsBtn">
+          <svg class="icon"><use href="#icon-layout"></use></svg>
+          <span>Timeline View</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. TABLE MATRIX VIEW (ENHANCED DOCX TEMPLATE) -->
+    <section class="table-card" id="tableViewContainer">
+      <div class="table-container">
+        <table class="itinerary-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>PLACE / ROUTE</th>
+              <th>ACTIVITIES & SCHEDULE</th>
+              <th>NOTES & SOLAT</th>
+              <th>NIGHT STAY</th>
+              <th style="text-align: right;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="itineraryTableBody">
+            <!-- Rendered Dynamically by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. TIMELINE / CARDS VIEW (ALTERNATIVE VIEW) -->
+    <section class="timeline-view" id="cardsViewContainer">
+      <!-- Rendered Dynamically by JS -->
+    </section>
+
+  </main>
+
+  <!-- MODAL: ADD / EDIT DAY -->
+  <div class="modal-overlay" id="dayModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="dayModalTitle">
+          <svg class="icon"><use href="#icon-calendar"></use></svg>
+          <span>Edit Day Details</span>
+        </h3>
+        <button class="btn-act-icon close-modal-btn" data-modal="dayModal">
+          <svg class="icon" style="width: 1.4em; height: 1.4em;"><use href="#icon-plus" style="transform: rotate(45deg);"></use></svg>
+        </button>
+      </div>
+      <form id="dayForm">
+        <div class="modal-body">
+          <input type="hidden" id="dayFormId" />
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="dayFormDate">Date (e.g. 28/8)</label>
+              <input type="text" id="dayFormDate" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label for="dayFormDayName">Day Name</label>
+              <input type="text" id="dayFormDayName" class="form-input" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="dayFormPlace">Place / Route Summary</label>
+            <input type="text" id="dayFormPlace" class="form-input" required />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="dayFormStay">Night Stay Location</label>
+              <input type="text" id="dayFormStay" class="form-input" placeholder="e.g. Perth, Fremantle" required />
+            </div>
+            <div class="form-group">
+              <label for="dayFormDrive">Estimated Drive Distance</label>
+              <input type="text" id="dayFormDrive" class="form-input" placeholder="e.g. ~45 km, ~2h 15m drive" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="dayFormNote">Notes & General Tips</label>
+            <textarea id="dayFormNote" class="form-textarea" rows="3" placeholder="Departure times, mosque info, sunset tips..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn" data-modal="dayModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD / EDIT ACTIVITY -->
+  <div class="modal-overlay" id="actModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="actModalTitle">
+          <svg class="icon"><use href="#icon-edit"></use></svg>
+          <span>Activity Details</span>
+        </h3>
+        <button class="btn-act-icon close-modal-btn" data-modal="actModal">
+          <svg class="icon" style="width: 1.4em; height: 1.4em;"><use href="#icon-plus" style="transform: rotate(45deg);"></use></svg>
+        </button>
+      </div>
+      <form id="actForm">
+        <div class="modal-body">
+          <input type="hidden" id="actFormDayId" />
+          <input type="hidden" id="actFormActId" />
+
+          <div class="form-group">
+            <label for="actFormTitle">Activity Title</label>
+            <input type="text" id="actFormTitle" class="form-input" placeholder="e.g. Caversham Wildlife Park" required />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="actFormCategory">Category</label>
+              <select id="actFormCategory" class="form-select-modal">
+                <option value="must">Must-Visit</option>
+                <option value="wildlife">Wildlife & Nature</option>
+                <option value="solat">Mosque & Solat</option>
+                <option value="food">Food & Tasting</option>
+                <option value="shopping">Shopping</option>
+                <option value="transport">Transport / Flight</option>
+                <option value="hiking">Hiking / Lookout</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="actFormTime">Time / Show Schedule</label>
+              <input type="text" id="actFormTime" class="form-input" placeholder="e.g. 9:00 AM – 4:30 PM (Shows: 10am, 1pm)" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="actFormDesc">Description & Insider Tips</label>
+            <textarea id="actFormDesc" class="form-textarea" rows="3" placeholder="Details, ticket prices, photo spots..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="actFormMaps">Google Maps Link / Query</label>
+            <input type="url" id="actFormMaps" class="form-input" placeholder="https://maps.google.com/?q=..." />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary close-modal-btn" data-modal="actModal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Activity</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- ==========================================================================
+       9. MASTER DATA & REACTIVE CLIENT LOGIC
+       ========================================================================== -->
+  <script>
+    // Master Initial Template from Perth Intinerary.docx
+    const DEFAULT_ITINERARY = [
+      {
+        id: 1,
+        date: "28/8",
+        dayName: "Friday",
+        place: "KLIA - Perth",
+        stay: "Perth",
+        drive: "20 km airport transit",
+        note: "Depart 2.00 pm, arrive 7.50 pm. Car rental pickup at Perth Airport. Check-in Perth stay.",
+        activities: [
+          {
+            id: "act-1-1",
+            title: "Flight: KLIA to Perth Airport",
+            category: "transport",
+            time: "Depart 2:00 PM → Arrive 7:50 PM",
+            desc: "Flight from KLIA Terminal. Australian ETA Visa and passport ready.",
+            maps: "https://maps.google.com/?q=Perth+Airport",
+            done: false
+          },
+          {
+            id: "act-1-2",
+            title: "Car rental at Perth Airport",
+            category: "must",
+            time: "8:30 PM",
+            desc: "Collect vehicle, inspect and take photos of bodywork, connect phone mount.",
+            maps: "https://maps.google.com/?q=Perth+Airport+Car+Rental",
+            done: false
+          },
+          {
+            id: "act-1-3",
+            title: "Check-in Accommodation (Perth)",
+            category: "transport",
+            time: "9:30 PM",
+            desc: "Check-in, unpack, and rest for Fremantle walking tour tomorrow.",
+            maps: "https://maps.google.com/?q=Perth+City",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 2,
+        date: "29/8",
+        dayName: "Saturday",
+        place: "Fremantle",
+        stay: "Perth",
+        drive: "40 km return drive",
+        note: "Fremantle weekend markets, prison heritage tour, and seaside dinner at Fishing Boat Harbour.",
+        activities: [
+          {
+            id: "act-2-1",
+            title: "Fremantle Markets",
+            category: "must",
+            time: "9:00 AM – 6:00 PM",
+            desc: "Famous vibrant weekend market with fresh fruits, honey, coffee, and crafts.",
+            maps: "https://maps.google.com/?q=Fremantle+Markets",
+            done: false
+          },
+          {
+            id: "act-2-2",
+            title: "Fremantle Prison",
+            category: "must",
+            time: "9:00 AM – 5:00 PM",
+            desc: "UNESCO World Heritage convict prison. Explore gatehouse or guided tours.",
+            maps: "https://maps.google.com/?q=Fremantle+Prison",
+            done: false
+          },
+          {
+            id: "act-2-3",
+            title: "Round House",
+            category: "must",
+            time: "10:30 AM – 3:30 PM",
+            desc: "Oldest public building in WA overlooking Bathers Beach and the Indian Ocean.",
+            maps: "https://maps.google.com/?q=The+Round+House+Fremantle",
+            done: false
+          },
+          {
+            id: "act-2-4",
+            title: "Bathers Beach (optional)",
+            category: "wildlife",
+            time: "Afternoon",
+            desc: "Relaxing coastal breeze and stroll on heritage boardwalk.",
+            maps: "https://maps.google.com/?q=Bathers+Beach+Fremantle",
+            done: false
+          },
+          {
+            id: "act-2-5",
+            title: "Fishing Boat Harbour (optional) & Night market",
+            category: "food",
+            time: "Sunset & Dinner",
+            desc: "Iconic seaside fish & chips. Check local weekend night market schedule.",
+            maps: "https://maps.google.com/?q=Fremantle+Fishing+Boat+Harbour",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 3,
+        date: "30/8",
+        dayName: "Sunday",
+        place: "Caversham / Swan Valley",
+        stay: "Perth",
+        drive: "75 km scenic loop",
+        note: "Depart 8.00am. *Solat at Swan Valley Mosque. Watch sunset at Zigzag Scenic Drive (~5:50 PM).",
+        activities: [
+          {
+            id: "act-3-1",
+            title: "Caversham Wildlife Park",
+            category: "wildlife",
+            time: "9:00 AM – 4:30 PM (Shows: 10am, 1pm, 3pm)",
+            desc: "Meet koalas, wombats, and hand-feed kangaroos. Watch Aussie Farm Show.",
+            maps: "https://maps.google.com/?q=Caversham+Wildlife+Park",
+            done: false
+          },
+          {
+            id: "act-3-2",
+            title: "Bennet Brook Railway & Revolutions Transport Museum",
+            category: "shopping",
+            time: "10:00 AM – 4:00 PM",
+            desc: "Heritage train ride in Whiteman Park. *Great spot for cheap souvenirs.",
+            maps: "https://maps.google.com/?q=Bennett+Brook+Railway",
+            done: false
+          },
+          {
+            id: "act-3-3",
+            title: "Margaret River Chocolate Co & Whistler's Chocolate",
+            category: "food",
+            time: "9:00 AM – 5:00 PM",
+            desc: "Swan Valley factory outlets with free tastings and hot chocolate.",
+            maps: "https://maps.google.com/?q=Margaret+River+Chocolate+Company+Swan+Valley",
+            done: false
+          },
+          {
+            id: "act-3-4",
+            title: "Visit the House of Honey & Sticky Spoon Café",
+            category: "food",
+            time: "10:00 AM – 5:00 PM",
+            desc: "Varietal raw honey tasting and honeycomb ice cream.",
+            maps: "https://maps.google.com/?q=House+of+Honey+Swan+Valley",
+            done: false
+          },
+          {
+            id: "act-3-5",
+            title: "Solat at Swan Valley Mosque",
+            category: "solat",
+            time: "Midday (1:15 PM)",
+            desc: "Community mosque with wudhu and prayer facilities.",
+            maps: "https://maps.google.com/?q=Swan+Valley+Mosque",
+            done: false
+          },
+          {
+            id: "act-3-6",
+            title: "Perth Observatory",
+            category: "must",
+            time: "1:00 PM – 4:00 PM",
+            desc: "Historic observatory located in Bickley hills.",
+            maps: "https://maps.google.com/?q=Perth+Observatory",
+            done: false
+          },
+          {
+            id: "act-3-7",
+            title: "Zigzag Scenic Drive (watch sunset)",
+            category: "wildlife",
+            time: "5:15 PM – 6:15 PM",
+            desc: "One-way panoramic downhill drive in Gooseberry Hill over Perth city skyline.",
+            maps: "https://maps.google.com/?q=Zig+Zag+Scenic+Drive",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 4,
+        date: "31/8",
+        dayName: "Monday",
+        place: "Fremantle & Perth City",
+        stay: "Perth",
+        drive: "35 km metro transit",
+        note: "Whale watching morning cruise, Kings Park botanical garden, Elizabeth Quay, and Perth Mosque.",
+        activities: [
+          {
+            id: "act-4-1",
+            title: "Whale watching depart from Fremantle",
+            category: "wildlife",
+            time: "9:00 AM Departure",
+            desc: "Witness humpback whale migration offshore. Arrive at Fremantle jetty 30m early.",
+            maps: "https://maps.google.com/?q=Fremantle+Whale+Watching",
+            done: false
+          },
+          {
+            id: "act-4-2",
+            title: "King's Park & Botanic Garden",
+            category: "must",
+            time: "12:30 PM",
+            desc: "Iconic treetop canopy walkway and panoramic view of Swan River and skyline.",
+            maps: "https://maps.google.com/?q=Kings+Park+Botanic+Garden",
+            done: false
+          },
+          {
+            id: "act-4-3",
+            title: "Elizabeth Quay & Bell Tower",
+            category: "must",
+            time: "2:30 PM",
+            desc: "Waterfront precinct, bridge, and riverside stroll.",
+            maps: "https://maps.google.com/?q=Elizabeth+Quay+Perth",
+            done: false
+          },
+          {
+            id: "act-4-4",
+            title: "Murray Street Mall & Shopping",
+            category: "shopping",
+            time: "4:00 PM",
+            desc: "Pedestrian mall with international retailers and department stores.",
+            maps: "https://maps.google.com/?q=Murray+Street+Mall+Perth",
+            done: false
+          },
+          {
+            id: "act-4-5",
+            title: "Perth Mosque (Northbridge)",
+            category: "solat",
+            time: "5:00 PM",
+            desc: "Historic 1905 heritage mosque located at 427 William St, Northbridge.",
+            maps: "https://maps.google.com/?q=Perth+Mosque+William+Street",
+            done: false
+          },
+          {
+            id: "act-4-6",
+            title: "Watertown Brand Outlet Centre",
+            category: "shopping",
+            time: "5:45 PM – 7:00 PM",
+            desc: "Outlet mall with discounted brands and sporting goods.",
+            maps: "https://maps.google.com/?q=Watertown+Brand+Outlet+Centre",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 5,
+        date: "1/9",
+        dayName: "Tuesday",
+        place: "Rottnest Island",
+        stay: "Perth",
+        drive: "Ferry + e-Bike",
+        note: "7 mins drive to Fremantle (B Shed/Northport). Ferry depart 7.30am, depart Rottnest 2.30pm. Hire e-bike.",
+        activities: [
+          {
+            id: "act-5-1",
+            title: "Fremantle Ferry (B Shed / Northport)",
+            category: "transport",
+            time: "7:00 AM (Ferry 7:30 AM)",
+            desc: "Fast catamaran crossing (~30 mins) to Rottnest Island.",
+            maps: "https://maps.google.com/?q=Rottnest+Express+B+Shed",
+            done: false
+          },
+          {
+            id: "act-5-2",
+            title: "Hire electric bike / bus tour",
+            category: "must",
+            time: "8:30 AM – 2:00 PM",
+            desc: "Explore The Basin, Pinky Beach, Bathurst Lighthouse, and find friendly Quokkas.",
+            maps: "https://maps.google.com/?q=Rottnest+Island",
+            done: false
+          },
+          {
+            id: "act-5-3",
+            title: "Return Ferry to Fremantle",
+            category: "transport",
+            time: "Depart Rottnest 2:30 PM",
+            desc: "Arrive back in Fremantle ~3:15 PM. Rest and enjoy dinner in Perth.",
+            maps: "https://maps.google.com/?q=Fremantle+Port",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 6,
+        date: "2/9",
+        dayName: "Wednesday",
+        place: "Lancelin & Pinnacles",
+        stay: "Perth",
+        drive: "380 km round-trip",
+        note: "Giant white sand dunes and ancient limestone desert pillars. *Solat at Masjid Al-Taqwa on route.",
+        activities: [
+          {
+            id: "act-6-1",
+            title: "Two Rocks & The King Neptune Statue",
+            category: "must",
+            time: "Morning Stop",
+            desc: "Heritage retro statue overlooking Two Rocks Marina.",
+            maps: "https://maps.google.com/?q=King+Neptune+Statue+Two+Rocks",
+            done: false
+          },
+          {
+            id: "act-6-2",
+            title: "Lancelin Sand Dunes",
+            category: "must",
+            time: "8:00 AM – 7:00 PM",
+            desc: "Massive white sand dunes! Rent sandboards (~$10) or 4WD buggy ride.",
+            maps: "https://maps.google.com/?q=Lancelin+Sand+Dunes",
+            done: false
+          },
+          {
+            id: "act-6-3",
+            title: "Pinnacles Desert (Nambung National Park)",
+            category: "must",
+            time: "9:30 AM – 4:30 PM",
+            desc: "Drive or walk through thousands of limestone pillars at golden hour.",
+            maps: "https://maps.google.com/?q=The+Pinnacles+Desert",
+            done: false
+          },
+          {
+            id: "act-6-4",
+            title: "Solat at Masjid Al-Taqwa (Mirrabooka)",
+            category: "solat",
+            time: "Evening on return",
+            desc: "Northern corridor community mosque.",
+            maps: "https://maps.google.com/?q=Masjid+Al-Taqwa+Mirrabooka",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 7,
+        date: "3/9",
+        dayName: "Thursday",
+        place: "Mandurah & Margaret River",
+        stay: "Perth / South Coast",
+        drive: "520 km south route",
+        note: "Wild dolphins, giant stingrays in shallow water at Hamelin Bay, and Canal Rock sunset. *Solat at park.",
+        activities: [
+          {
+            id: "act-7-1",
+            title: "Mandurah Dolphin Quay (watch dolphin)",
+            category: "wildlife",
+            time: "Morning",
+            desc: "Watch wild dolphins swimming through the marina canal channels.",
+            maps: "https://maps.google.com/?q=Dolphin+Quay+Mandurah",
+            done: false
+          },
+          {
+            id: "act-7-2",
+            title: "Hamelin Bay Boat Ramp (watch sting ray)",
+            category: "wildlife",
+            time: "Midday",
+            desc: "Stand in calm shallow waters as giant wild stingrays swim right by!",
+            maps: "https://maps.google.com/?q=Hamelin+Bay+Boat+Ramp",
+            done: false
+          },
+          {
+            id: "act-7-3",
+            title: "Margaret River Chocolate Co",
+            category: "food",
+            time: "9:00 AM – 5:00 PM",
+            desc: "Original flagship chocolate showroom in Margaret River.",
+            maps: "https://maps.google.com/?q=Margaret+River+Chocolate+Company",
+            done: false
+          },
+          {
+            id: "act-7-4",
+            title: "Canal Rock (sunset view)",
+            category: "wildlife",
+            time: "5:15 PM Sunset",
+            desc: "Spectacular wooden walkway over crashing ocean channels.",
+            maps: "https://maps.google.com/?q=Canal+Rocks+Yallingup",
+            done: false
+          },
+          {
+            id: "act-7-5",
+            title: "Solat at scenic park / rest stop",
+            category: "solat",
+            time: "Evening",
+            desc: "Travel solat with portable sejadah and spray bottle wudhu.",
+            maps: "https://maps.google.com/?q=Margaret+River",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 8,
+        date: "4/9",
+        dayName: "Friday",
+        place: "Hiking & Scenic Picnic",
+        stay: "Perth",
+        drive: "60 km hills route",
+        note: "Golden View Lookout and Reabold Hill Summit hiking trails. Afternoon relaxing picnic.",
+        activities: [
+          {
+            id: "act-8-1",
+            title: "Golden View Lookout (Mundaring)",
+            category: "hiking",
+            time: "Morning",
+            desc: "Park at South Ledge Carpark. Short easy walk to dramatic lake viewing platform.",
+            maps: "https://maps.google.com/?q=Golden+View+Lookout+Mundaring",
+            done: false
+          },
+          {
+            id: "act-8-2",
+            title: "Bold Park Fremantle Area (Reabold Hill)",
+            category: "hiking",
+            time: "5:30 AM – 7:00 PM",
+            desc: "Park at Reabold Hill Carpark. Highest natural point in coastal metro area (85m).",
+            maps: "https://maps.google.com/?q=Reabold+Hill+Bold+Park",
+            done: false
+          },
+          {
+            id: "act-8-3",
+            title: "Afternoon Picnic & Luggage Preparation",
+            category: "food",
+            time: "Afternoon",
+            desc: "Relaxing picnic and organizing luggage for tomorrow's checkout.",
+            maps: "https://maps.google.com/?q=Kings+Park",
+            done: false
+          }
+        ]
+      },
+      {
+        id: 9,
+        date: "5/9",
+        dayName: "Saturday",
+        place: "Perth - KLIA",
+        stay: "Flight",
+        drive: "25 km airport transit",
+        note: "Check out 11.00am. Return Car rental at Perth Airport. Depart 8.50 pm, arrive KLIA 2.25am.",
+        activities: [
+          {
+            id: "act-9-1",
+            title: "Hotel Check out",
+            category: "transport",
+            time: "11:00 AM",
+            desc: "Check out, load luggage into rental car.",
+            maps: "https://maps.google.com/?q=Perth+CBD",
+            done: false
+          },
+          {
+            id: "act-9-2",
+            title: "Last-Minute Shopping & Northbridge Halal Lunch",
+            category: "shopping",
+            time: "12:00 PM – 4:30 PM",
+            desc: "Pick up Australian honey and gifts, enjoy lunch in Northbridge.",
+            maps: "https://maps.google.com/?q=Northbridge+Perth",
+            done: false
+          },
+          {
+            id: "act-9-3",
+            title: "Return Car rental at Perth Airport",
+            category: "must",
+            time: "5:30 PM",
+            desc: "Top up petrol to full before airport return, proceed to check-in counter.",
+            maps: "https://maps.google.com/?q=Perth+Airport+Car+Rental",
+            done: false
+          },
+          {
+            id: "act-9-4",
+            title: "Flight: Perth to KLIA",
+            category: "transport",
+            time: "Depart 8:50 PM → Arrive 2:25 AM (6/9)",
+            desc: "Flight back home to Kuala Lumpur. Safe travels! 🇲🇾✈️",
+            maps: "https://maps.google.com/?q=Perth+Airport+Terminal",
+            done: false
+          }
+        ]
+      }
+    ];
+
+    const STORAGE_KEY = "perth_reactive_itinerary_v2";
+    const THEME_KEY = "perth_theme_v2";
+
+    function loadItineraryData() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) return JSON.parse(stored);
+      } catch (e) {
+        console.error("Failed to load stored itinerary", e);
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_ITINERARY));
+    }
+
+    function saveItineraryData(data) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        showToast("Changes saved offline");
+      } catch (e) {
+        console.error("Storage save failed", e);
+      }
+    }
+
+    let itinerary = loadItineraryData();
+    let currentView = "table";
+    let searchQuery = "";
+    let selectedCategory = "all";
+
+    // --- RENDER FUNCTIONS ---
+    function renderApp() {
+      renderTable();
+      renderCards();
+      updateMetrics();
+    }
+
+    function updateMetrics() {
+      let totalActs = 0;
+      let doneActs = 0;
+
+      itinerary.forEach(day => {
+        if (day.activities) {
+          totalActs += day.activities.length;
+          day.activities.forEach(a => { if (a.done) doneActs++; });
+        }
+      });
+
+      document.getElementById("metricTotalDays").textContent = itinerary.length;
+      document.getElementById("metricDoneActivities").textContent = `${doneActs} / ${totalActs}`;
+      
+      const pct = totalActs > 0 ? Math.round((doneActs / totalActs) * 100) : 0;
+      document.getElementById("mainProgressFill").style.width = `${pct}%`;
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("itineraryTableBody");
+      if (!tbody) return;
+
+      const filtered = filterItinerary();
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-dim);">
+              No itinerary days match the current search filter.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(day => {
+        const activitiesHtml = day.activities && day.activities.length > 0
+          ? day.activities.map((act, actIdx) => `
+              <div class="activity-item-row ${act.done ? 'done' : ''}" id="act-row-${act.id}">
+                <input type="checkbox" class="custom-check" data-dayid="${day.id}" data-actid="${act.id}" ${act.done ? 'checked' : ''} title="Mark completed" />
+                <div class="act-content">
+                  <div class="act-header-inline">
+                    <span class="act-title">${escapeHtml(act.title)}</span>
+                    ${act.time ? `<span class="act-time-pill"><svg class="icon" style="width:0.9em; height:0.9em;"><use href="#icon-clock"></use></svg> ${escapeHtml(act.time)}</span>` : ''}
+                  </div>
+                  ${act.desc ? `<p class="act-desc">${escapeHtml(act.desc)}</p>` : ''}
+                </div>
+                <div class="act-actions-inline">
+                  ${act.maps ? `<a href="${act.maps}" target="_blank" rel="noopener" class="btn-act-icon" title="Open Map"><svg class="icon"><use href="#icon-external"></use></svg></a>` : ''}
+                  <button class="btn-act-icon edit-act-btn" data-dayid="${day.id}" data-actid="${act.id}" title="Edit Activity"><svg class="icon"><use href="#icon-edit"></use></svg></button>
+                  <button class="btn-act-icon delete delete-act-btn" data-dayid="${day.id}" data-actid="${act.id}" title="Delete Activity"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                </div>
+              </div>
+            `).join('')
+          : `<div style="font-size:0.8rem; color:var(--text-dim); padding:4px;">No activities listed. Click below to add.</div>`;
+
+        // Check if day has solat notes
+        const isSolatDay = day.note && day.note.toLowerCase().includes("solat");
+
+        return `
+          <tr class="day-row" data-dayid="${day.id}">
+            <td class="cell-date">
+              <span class="date-badge">${escapeHtml(day.date)}</span>
+              <span class="day-name">${escapeHtml(day.dayName)}</span>
+            </td>
+
+            <td class="cell-place">
+              <div class="place-title">${escapeHtml(day.place)}</div>
+              ${day.drive ? `<div class="drive-time-badge"><svg class="icon"><use href="#icon-car"></use></svg> ${escapeHtml(day.drive)}</div>` : ''}
+            </td>
+
+            <td class="cell-activities">
+              <div class="activities-sublist">
+                ${activitiesHtml}
+              </div>
+              <button class="btn-add-activity-row" data-dayid="${day.id}">
+                <svg class="icon"><use href="#icon-plus"></use></svg>
+                <span>Add Activity</span>
+              </button>
+            </td>
+
+            <td class="cell-notes">
+              <div class="notes-box">${escapeHtml(day.note || "—")}</div>
+              ${isSolatDay ? `<div class="solat-highlight-badge"><svg class="icon"><use href="#icon-mosque"></use></svg> Mosque / Solat on Route</div>` : ''}
+            </td>
+
+            <td class="cell-stay">
+              <span class="stay-badge">
+                <svg class="icon"><use href="#icon-moon"></use></svg>
+                ${escapeHtml(day.stay || "Perth")}
+              </span>
+            </td>
+
+            <td class="cell-actions">
+              <div class="row-actions-group">
+                <button class="btn btn-secondary btn-icon btn-sm edit-day-btn" data-dayid="${day.id}" title="Edit Day Metadata">
+                  <svg class="icon"><use href="#icon-edit"></use></svg>
+                </button>
+                <button class="btn btn-danger btn-icon btn-sm delete-day-btn" data-dayid="${day.id}" title="Delete Day">
+                  <svg class="icon"><use href="#icon-trash"></use></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      bindDynamicTableEvents();
+    }
+
+    function renderCards() {
+      const container = document.getElementById("cardsViewContainer");
+      if (!container) return;
+
+      const filtered = filterItinerary();
+
+      container.innerHTML = filtered.map(day => `
+        <div class="day-card" data-dayid="${day.id}">
+          <div class="day-card-header">
+            <div class="day-card-title-group">
+              <h3>
+                <span style="color:var(--accent-ocean-light);">${escapeHtml(day.date)} (${escapeHtml(day.dayName)})</span>
+                <span>•</span>
+                <span>${escapeHtml(day.place)}</span>
+              </h3>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="stay-badge"><svg class="icon"><use href="#icon-moon"></use></svg> ${escapeHtml(day.stay)}</span>
+              <button class="btn btn-secondary btn-sm edit-day-btn" data-dayid="${day.id}">
+                <svg class="icon"><use href="#icon-edit"></use></svg> Edit
+              </button>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 12px; font-size: 0.85rem; color: var(--text-muted);">
+            <strong>Notes:</strong> ${escapeHtml(day.note || "None")}
+          </div>
+
+          <div class="activities-sublist">
+            ${day.activities.map(act => `
+              <div class="activity-item-row ${act.done ? 'done' : ''}">
+                <input type="checkbox" class="custom-check" data-dayid="${day.id}" data-actid="${act.id}" ${act.done ? 'checked' : ''} />
+                <div class="act-content">
+                  <div class="act-header-inline">
+                    <span class="act-title">${escapeHtml(act.title)}</span>
+                    ${act.time ? `<span class="act-time-pill"><svg class="icon" style="width:0.9em; height:0.9em;"><use href="#icon-clock"></use></svg> ${escapeHtml(act.time)}</span>` : ''}
+                  </div>
+                  ${act.desc ? `<p class="act-desc">${escapeHtml(act.desc)}</p>` : ''}
+                </div>
+                <div class="act-actions-inline">
+                  ${act.maps ? `<a href="${act.maps}" target="_blank" rel="noopener" class="btn-act-icon"><svg class="icon"><use href="#icon-external"></use></svg></a>` : ''}
+                  <button class="btn-act-icon edit-act-btn" data-dayid="${day.id}" data-actid="${act.id}"><svg class="icon"><use href="#icon-edit"></use></svg></button>
+                  <button class="btn-act-icon delete delete-act-btn" data-dayid="${day.id}" data-actid="${act.id}"><svg class="icon"><use href="#icon-trash"></use></svg></button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <button class="btn-add-activity-row" data-dayid="${day.id}" style="margin-top: 12px;">
+            <svg class="icon"><use href="#icon-plus"></use></svg>
+            <span>Add Activity to ${escapeHtml(day.date)}</span>
+          </button>
+        </div>
+      `).join('');
+
+      bindDynamicTableEvents();
+    }
+
+    function filterItinerary() {
+      return itinerary.map(day => {
+        const matchesDayText = (day.place + " " + day.date + " " + day.note + " " + day.stay).toLowerCase().includes(searchQuery.toLowerCase());
+        
+        let filteredActs = (day.activities || []).filter(act => {
+          const matchesQuery = searchQuery === "" || 
+            (act.title + " " + act.desc + " " + act.time).toLowerCase().includes(searchQuery.toLowerCase()) || 
+            matchesDayText;
+
+          const matchesCat = selectedCategory === "all" || act.category === selectedCategory;
+          return matchesQuery && matchesCat;
+        });
+
+        if (filteredActs.length > 0 || matchesDayText) {
+          const clone = Object.assign({}, day);
+          clone.activities = filteredActs;
+          return clone;
+        }
+        return null;
+      }).filter(Boolean);
+    }
+
+    function bindDynamicTableEvents() {
+      // Checkbox toggle
+      document.querySelectorAll('.custom-check').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const dayId = parseInt(e.target.getAttribute('data-dayid'));
+          const actId = e.target.getAttribute('data-actid');
+          const day = itinerary.find(d => d.id === dayId);
+          if (day) {
+            const act = day.activities.find(a => a.id === actId);
+            if (act) {
+              act.done = e.target.checked;
+              saveItineraryData(itinerary);
+              updateMetrics();
+              const row = e.target.closest('.activity-item-row');
+              if (row) {
+                if (act.done) row.classList.add('done');
+                else row.classList.remove('done');
+              }
+            }
+          }
+        });
+      });
+
+      // Add Activity Button
+      document.querySelectorAll('.btn-add-activity-row').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          openActivityModal(dayId, null);
+        });
+      });
+
+      // Edit Activity Button
+      document.querySelectorAll('.edit-act-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          const actId = btn.getAttribute('data-actid');
+          openActivityModal(dayId, actId);
+        });
+      });
+
+      // Delete Activity Button
+      document.querySelectorAll('.delete-act-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          const actId = btn.getAttribute('data-actid');
+          if (confirm("Delete this activity?")) {
+            const day = itinerary.find(d => d.id === dayId);
+            if (day) {
+              day.activities = day.activities.filter(a => a.id !== actId);
+              saveItineraryData(itinerary);
+              renderApp();
+            }
+          }
+        });
+      });
+
+      // Edit Day Button
+      document.querySelectorAll('.edit-day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          openDayModal(dayId);
+        });
+      });
+
+      // Delete Day Button
+      document.querySelectorAll('.delete-day-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          if (confirm(`Are you sure you want to delete Day ${dayId}?`)) {
+            itinerary = itinerary.filter(d => d.id !== dayId);
+            saveItineraryData(itinerary);
+            renderApp();
+          }
+        });
+      });
+    }
+
+    // --- MODAL CONTROLLERS ---
+    function openDayModal(dayId) {
+      const modal = document.getElementById("dayModal");
+      const title = document.getElementById("dayModalTitle");
+      const form = document.getElementById("dayForm");
+      form.reset();
+
+      if (dayId) {
+        const day = itinerary.find(d => d.id === dayId);
+        if (!day) return;
+        title.innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> <span>Edit Day ${day.id} Details</span>`;
+        document.getElementById("dayFormId").value = day.id;
+        document.getElementById("dayFormDate").value = day.date || "";
+        document.getElementById("dayFormDayName").value = day.dayName || "";
+        document.getElementById("dayFormPlace").value = day.place || "";
+        document.getElementById("dayFormStay").value = day.stay || "";
+        document.getElementById("dayFormDrive").value = day.drive || "";
+        document.getElementById("dayFormNote").value = day.note || "";
+      } else {
+        title.innerHTML = `<svg class="icon"><use href="#icon-plus"></use></svg> <span>Add New Day</span>`;
+        document.getElementById("dayFormId").value = "";
+      }
+
+      modal.classList.add("active");
+    }
+
+    function openActivityModal(dayId, actId) {
+      const modal = document.getElementById("actModal");
+      const title = document.getElementById("actModalTitle");
+      const form = document.getElementById("actForm");
+      form.reset();
+
+      document.getElementById("actFormDayId").value = dayId;
+      document.getElementById("actFormActId").value = actId || "";
+
+      if (actId) {
+        const day = itinerary.find(d => d.id === dayId);
+        const act = day ? day.activities.find(a => a.id === actId) : null;
+        if (act) {
+          title.innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> <span>Edit Activity</span>`;
+          document.getElementById("actFormTitle").value = act.title || "";
+          document.getElementById("actFormCategory").value = act.category || "must";
+          document.getElementById("actFormTime").value = act.time || "";
+          document.getElementById("actFormDesc").value = act.desc || "";
+          document.getElementById("actFormMaps").value = act.maps || "";
+        }
+      } else {
+        title.innerHTML = `<svg class="icon"><use href="#icon-plus"></use></svg> <span>Add Activity to Day</span>`;
+      }
+
+      modal.classList.add("active");
+    }
+
+    function setupModals() {
+      // Close modal buttons
+      document.querySelectorAll('.close-modal-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const modalId = btn.getAttribute('data-modal');
+          const modal = document.getElementById(modalId);
+          if (modal) modal.classList.remove('active');
+        });
+      });
+
+      // Day Form Submission
+      document.getElementById("dayForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const idVal = document.getElementById("dayFormId").value;
+        const date = document.getElementById("dayFormDate").value.trim();
+        const dayName = document.getElementById("dayFormDayName").value.trim();
+        const place = document.getElementById("dayFormPlace").value.trim();
+        const stay = document.getElementById("dayFormStay").value.trim();
+        const drive = document.getElementById("dayFormDrive").value.trim();
+        const note = document.getElementById("dayFormNote").value.trim();
+
+        if (idVal) {
+          const day = itinerary.find(d => d.id === parseInt(idVal));
+          if (day) {
+            day.date = date;
+            day.dayName = dayName;
+            day.place = place;
+            day.stay = stay;
+            day.drive = drive;
+            day.note = note;
+          }
+        } else {
+          const newId = itinerary.length > 0 ? Math.max(...itinerary.map(d => d.id)) + 1 : 1;
+          itinerary.push({
+            id: newId,
+            date,
+            dayName,
+            place,
+            stay,
+            drive,
+            note,
+            activities: []
+          });
+        }
+
+        saveItineraryData(itinerary);
+        document.getElementById("dayModal").classList.remove("active");
+        renderApp();
+      });
+
+      // Activity Form Submission
+      document.getElementById("actForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const dayId = parseInt(document.getElementById("actFormDayId").value);
+        const actId = document.getElementById("actFormActId").value;
+        const title = document.getElementById("actFormTitle").value.trim();
+        const category = document.getElementById("actFormCategory").value;
+        const time = document.getElementById("actFormTime").value.trim();
+        const desc = document.getElementById("actFormDesc").value.trim();
+        const maps = document.getElementById("actFormMaps").value.trim();
+
+        const day = itinerary.find(d => d.id === dayId);
+        if (!day) return;
+
+        if (actId) {
+          const act = day.activities.find(a => a.id === actId);
+          if (act) {
+            act.title = title;
+            act.category = category;
+            act.time = time;
+            act.desc = desc;
+            act.maps = maps;
+          }
+        } else {
+          day.activities.push({
+            id: `act-${dayId}-${Date.now().toString().slice(-4)}`,
+            title,
+            category,
+            time,
+            desc,
+            maps,
+            done: false
+          });
+        }
+
+        saveItineraryData(itinerary);
+        document.getElementById("actModal").classList.remove("active");
+        renderApp();
+      });
+    }
+
+    // --- THEME & UTILITIES ---
+    function setupTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || "dark";
+      document.documentElement.setAttribute("data-theme", saved);
+      updateThemeIcon(saved);
+
+      document.getElementById("themeToggleBtn").addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem(THEME_KEY, next);
+        updateThemeIcon(next);
+      });
+    }
+
+    function updateThemeIcon(theme) {
+      const icon = document.getElementById("themeIcon");
+      if (icon) {
+        icon.innerHTML = theme === "dark" 
+          ? `<use href="#icon-sun"></use>` 
+          : `<use href="#icon-moon"></use>`;
+      }
+    }
+
+    function setupCountdown() {
+      const el = document.getElementById("navCountdownText");
+      const target = new Date("2026-08-28T14:00:00+08:00");
+      function update() {
+        const now = new Date();
+        const diff = target - now;
+        if (diff <= 0) {
+          el.textContent = "Trip in Progress / Active";
+          return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        el.textContent = `${days}d ${hours}h until Flight`;
+      }
+      update();
+      setInterval(update, 60000);
+    }
+
+    function showToast(msg) {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.innerHTML = `<svg class="icon"><use href="#icon-check"></use></svg> <span>${escapeHtml(msg)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 250);
+      }, 2500);
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setupGlobalHandlers() {
+      // Add Day
+      document.getElementById("btnAddDayBtn").addEventListener("click", () => {
+        openDayModal(null);
+      });
+
+      // View Switcher
+      const tableBtn = document.getElementById("viewTableBtn");
+      const cardsBtn = document.getElementById("viewCardsBtn");
+      const tableView = document.getElementById("tableViewContainer");
+      const cardsView = document.getElementById("cardsViewContainer");
+
+      tableBtn.addEventListener("click", () => {
+        tableBtn.classList.add("active");
+        cardsBtn.classList.remove("active");
+        tableView.style.display = "block";
+        cardsView.classList.remove("active");
+      });
+
+      cardsBtn.addEventListener("click", () => {
+        cardsBtn.classList.add("active");
+        tableBtn.classList.remove("active");
+        tableView.style.display = "none";
+        cardsView.classList.add("active");
+      });
+
+      // Search & Filter
+      document.getElementById("filterSearchInput").addEventListener("input", (e) => {
+        searchQuery = e.target.value.trim();
+        renderApp();
+      });
+
+      document.getElementById("categoryFilterSelect").addEventListener("change", (e) => {
+        selectedCategory = e.target.value;
+        renderApp();
+      });
+
+      // Print PDF
+      document.getElementById("btnExportPdf").addEventListener("click", () => {
+        window.print();
+      });
+
+      // Backup JSON
+      document.getElementById("btnBackupJson").addEventListener("click", () => {
+        const backupObj = {
+          version: "2.0",
+          exportDate: new Date().toISOString(),
+          itinerary
+        };
+        const blob = new Blob([JSON.stringify(backupObj, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Perth_Itinerary_Backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Backup downloaded");
+      });
+
+      // Restore JSON
+      const restoreBtn = document.getElementById("btnRestoreJson");
+      const restoreInput = document.getElementById("restoreFileInput");
+      restoreBtn.addEventListener("click", () => restoreInput.click());
+      restoreInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            if (parsed.itinerary && Array.isArray(parsed.itinerary)) {
+              itinerary = parsed.itinerary;
+              saveItineraryData(itinerary);
+              renderApp();
+              showToast("Itinerary restored successfully!");
+            } else {
+              alert("Invalid itinerary backup structure.");
+            }
+          } catch (err) {
+            alert("Error reading JSON file.");
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      // Reset to Default
+      document.getElementById("btnResetDefault").addEventListener("click", () => {
+        if (confirm("Reset all days and activities back to original docx template?")) {
+          itinerary = JSON.parse(JSON.stringify(DEFAULT_ITINERARY));
+          saveItineraryData(itinerary);
+          renderApp();
+          showToast("Reset to default template");
+        }
+      });
+    }
+
+    // Initialize on DOM Ready
+    document.addEventListener("DOMContentLoaded", () => {
+      setupTheme();
+      setupCountdown();
+      setupModals();
+      setupGlobalHandlers();
+      renderApp();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,2480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Perth Itinerary Table V2</title>
+  <meta name="description" content="Clean, responsive, interactive itinerary table for Perth, Western Australia." />
+  
+  <!-- PWA & Mobile Web App Manifest -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#090e17" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Perth Trip" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <style>
+    /* ==========================================================================
+       1. CORE DESIGN SYSTEM & THEME TOKENS
+       ========================================================================== */
+    :root {
+      color-scheme: dark;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Dark Theme (Default) - Refined Editorial Slate */
+      --bg-app: #090e17;
+      --bg-card: #111827;
+      --bg-card-alt: #1a2234;
+      --bg-card-hover: #222d42;
+      --border-color: rgba(255, 255, 255, 0.09);
+      --border-color-strong: rgba(255, 255, 255, 0.18);
+      
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --text-dim: #6b7280;
+
+      /* Accents */
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --primary-light: #e0f2fe;
+      --primary-glow: rgba(2, 132, 199, 0.15);
+
+      --gold: #d97706;
+      --gold-light: #fef3c7;
+      --gold-glow: rgba(217, 119, 6, 0.15);
+
+      --emerald: #059669;
+      --emerald-light: #d1fae5;
+      --emerald-glow: rgba(5, 150, 105, 0.15);
+
+      --purple: #7c3aed;
+      --purple-light: #ede9fe;
+      --purple-glow: rgba(124, 58, 237, 0.15);
+
+      --rose: #e11d48;
+      --rose-light: #ffe4e6;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.5);
+
+      --transition: all 0.15s ease;
+    }
+
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-card-alt: #f1f5f9;
+      --bg-card-hover: #e2e8f0;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-color-strong: rgba(0, 0, 0, 0.15);
+      
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Themed Time Selector UI */
+    .time-selector-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 520px) {
+      .time-selector-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .themed-time-box {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color-strong);
+      border-radius: var(--radius-sm);
+      padding: 3px 6px;
+      transition: var(--transition);
+    }
+    .themed-time-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    .themed-select {
+      background: transparent !important;
+      border: none !important;
+      padding: 6px 2px !important;
+      font-weight: 700;
+      font-size: 0.95rem;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+      cursor: pointer;
+      text-align: center;
+    }
+    .themed-select:focus {
+      outline: none;
+    }
+    .themed-select option {
+      background-color: var(--bg-card);
+      color: var(--text-main);
+    }
+
+    .time-sep {
+      font-weight: 800;
+      color: var(--text-dim);
+      font-size: 1rem;
+      padding: 0 2px;
+    }
+
+    .ampm-switch {
+      display: flex;
+      background: var(--bg-card);
+      border-radius: 3px;
+      padding: 2px;
+      margin-left: auto;
+      border: 1px solid var(--border-color);
+    }
+
+    .ampm-toggle-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+    .ampm-toggle-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      padding-bottom: 60px;
+      transition: background-color var(--transition), color var(--transition);
+      overflow-x: hidden;
+    }
+
+    /* SVG Vector Icon Global Class */
+    .svg-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.1em;
+      height: 1.1em;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      vertical-align: middle;
+    }
+
+    /* ==========================================================================
+       2. CLEAN HEADER & SECTION TABS
+       ========================================================================== */
+    .top-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 28px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .header-inner {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon-box {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--primary), var(--gold));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.1;
+    }
+
+    .brand-text span {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Section Tabs */
+    .nav-section-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--bg-card-alt);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Action Buttons Group */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: var(--transition);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background: var(--bg-card-alt);
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+    .btn-outline:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--border-color-strong);
+    }
+
+    .btn-icon-only {
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ==========================================================================
+       3. MAIN LAYOUT & THE CENTRIC ITINERARY TABLE
+       ========================================================================== */
+    .main-container {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 28px;
+    }
+
+    /* Section Wrapper */
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Centric Table Container */
+    .table-wrapper-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-toolbar {
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-card-alt);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .table-status-summary {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .status-counter-pill {
+      font-weight: 700;
+      color: var(--emerald);
+      background: var(--emerald-glow);
+      padding: 3px 8px;
+      border-radius: var(--radius-full);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .table-scrollable {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .perth-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+      min-width: 950px;
+    }
+
+    .perth-table thead th {
+      background: var(--bg-card-alt);
+      color: var(--text-main);
+      font-weight: 800;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 12px 16px;
+      border-bottom: 2px solid var(--border-color-strong);
+      white-space: nowrap;
+    }
+
+    .perth-table tbody tr.row-day {
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color var(--transition);
+    }
+
+    .perth-table tbody tr.row-day:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    .perth-table td {
+      padding: 16px;
+      vertical-align: top;
+    }
+
+    /* Column Specific Formatting */
+    .col-date {
+      width: 140px;
+      white-space: nowrap;
+    }
+
+    .date-main {
+      font-weight: 800;
+      font-size: 1rem;
+      color: var(--text-main);
+      display: block;
+      line-height: 1.2;
+    }
+
+    .date-sub {
+      font-size: 0.78rem;
+      color: var(--primary);
+      font-weight: 700;
+      display: block;
+      margin-top: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .col-place {
+      width: 200px;
+    }
+
+    .place-name {
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .col-activities {
+      min-width: 360px;
+    }
+
+    .activity-items-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      transition: var(--transition);
+    }
+
+    .activity-item:hover {
+      border-color: var(--border-color-strong);
+    }
+
+    .activity-item.completed {
+      opacity: 0.55;
+      background: transparent;
+    }
+
+    .activity-item.completed .act-text {
+      text-decoration: line-through;
+    }
+
+    .checkbox-act {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 17px;
+      height: 17px;
+      border: 2px solid var(--text-dim);
+      border-radius: 3px;
+      background: transparent;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      margin-top: 2px;
+      flex-shrink: 0;
+      transition: var(--transition);
+    }
+
+    .checkbox-act:checked {
+      background: var(--emerald);
+      border-color: var(--emerald);
+    }
+
+    .checkbox-act:checked::after {
+      content: '';
+      width: 4px;
+      height: 7px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .act-text-wrap {
+      flex: 1;
+    }
+
+    .act-text {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .act-time-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.72rem;
+      color: var(--gold);
+      font-weight: 600;
+      background: var(--gold-glow);
+      padding: 2px 7px;
+      border-radius: var(--radius-sm);
+      margin-top: 3px;
+      transition: var(--transition);
+      user-select: none;
+    }
+
+    .act-time-tag:hover {
+      background: var(--gold);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .time-chip-btn {
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    .time-chip-btn:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .act-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      opacity: 0.3;
+      transition: opacity var(--transition);
+    }
+
+    .activity-item:hover .act-actions {
+      opacity: 1;
+    }
+
+    .btn-act-sub {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-act-sub:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .btn-act-sub.del:hover {
+      color: var(--rose);
+    }
+
+    .btn-inline-add {
+      background: transparent;
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 6px;
+      width: 100%;
+      color: var(--primary);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 6px;
+      transition: var(--transition);
+    }
+
+    .btn-inline-add:hover {
+      background: var(--primary-glow);
+      border-color: var(--primary);
+    }
+
+    .col-note {
+      width: 220px;
+    }
+
+    .note-content {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .solat-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.75rem;
+      color: var(--emerald);
+      background: var(--emerald-glow);
+      padding: 3px 8px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .col-stay {
+      width: 130px;
+    }
+
+    .stay-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--purple);
+      background: var(--purple-glow);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .col-actions {
+      width: 90px;
+      text-align: right;
+    }
+
+    .actions-flex {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+
+    /* ==========================================================================
+       4. SMART MOBILE RESPONSIVENESS (ZERO HORIZONTAL SCROLL)
+       ========================================================================== */
+    @media (max-width: 768px) {
+      .top-header {
+        padding: 10px 14px;
+      }
+
+      .header-inner {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .header-brand {
+        justify-content: space-between;
+      }
+
+      .nav-section-tabs {
+        width: 100%;
+        overflow-x: auto;
+        justify-content: flex-start;
+        scrollbar-width: none;
+      }
+      .nav-section-tabs::-webkit-scrollbar { display: none; }
+
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .main-container {
+        padding: 12px 10px;
+      }
+
+      .table-wrapper-card {
+        border: none;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .table-toolbar {
+        border-radius: var(--radius-sm);
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .table-scrollable {
+        overflow-x: visible !important;
+        width: 100% !important;
+      }
+
+      .perth-table {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+
+      .perth-table thead {
+        display: none !important;
+      }
+
+      .perth-table tbody {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+
+      .perth-table tr.row-day {
+        display: grid !important;
+        grid-template-columns: 1fr auto !important;
+        grid-template-areas:
+          "date actions"
+          "place stay"
+          "activities activities"
+          "note note" !important;
+        gap: 6px 10px !important;
+        width: 100% !important;
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color-strong) !important;
+        border-radius: var(--radius-md) !important;
+        padding: 12px !important;
+        box-shadow: var(--shadow-sm) !important;
+      }
+
+      .perth-table tr.row-day:hover {
+        background-color: var(--bg-card) !important;
+      }
+
+      .col-date {
+        grid-area: date !important;
+        width: auto !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 8px !important;
+      }
+      .col-date .date-main {
+        font-size: 1.05rem !important;
+        display: inline-block !important;
+      }
+      .col-date .date-sub {
+        font-size: 0.8rem !important;
+        display: inline-block !important;
+        margin-top: 0 !important;
+      }
+
+      .col-actions {
+        grid-area: actions !important;
+        width: auto !important;
+        padding: 0 !important;
+        justify-self: end !important;
+      }
+
+      .col-place {
+        grid-area: place !important;
+        width: auto !important;
+        padding: 0 !important;
+      }
+      .col-place .place-name {
+        font-size: 0.92rem !important;
+      }
+
+      .col-stay {
+        grid-area: stay !important;
+        width: auto !important;
+        padding: 0 !important;
+        justify-self: end !important;
+      }
+
+      .col-activities {
+        grid-area: activities !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        padding: 8px 0 0 0 !important;
+        border-top: 1px dashed var(--border-color) !important;
+      }
+
+      .col-note {
+        grid-area: note !important;
+        width: 100% !important;
+        padding: 6px 0 0 0 !important;
+        border-top: 1px dashed var(--border-color) !important;
+      }
+
+      .activity-item {
+        padding: 8px 10px !important;
+      }
+
+      .act-actions {
+        opacity: 0.8 !important;
+      }
+    }
+
+    /* ==========================================================================
+       5. OTHER OPTIONAL SECTIONS (EXPENSES, SOLAT, PACKING)
+       ========================================================================== */
+    .section-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .tool-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+    }
+
+    .tool-card-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-row {
+      margin-bottom: 12px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 4px;
+    }
+
+    .form-ctrl {
+      width: 100%;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    .form-ctrl:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    /* ==========================================================================
+       5. MODAL DIALOGS
+       ========================================================================== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-dialog {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color-strong);
+      border-radius: var(--radius-md);
+      width: 100%;
+      max-width: 520px;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .modal-header-bar {
+      padding: 14px 20px;
+      background: var(--bg-card-alt);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header-bar h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .modal-content-body {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer-bar {
+      padding: 12px 20px;
+      background: var(--bg-card-alt);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* Toast */
+    .toast-box {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 2000;
+      background: var(--bg-card-alt);
+      border: 1px solid var(--primary);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.82rem;
+      font-weight: 600;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+    }
+
+    .toast-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ==========================================================================
+       6. PRINT & CLEAN A4 PDF OUTPUT
+       ========================================================================== */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding-bottom: 0 !important;
+      }
+
+      .top-header, .table-toolbar, .btn-inline-add, .act-actions, 
+      .col-actions, .modal-backdrop, .toast-box, .btn {
+        display: none !important;
+      }
+
+      .main-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      .table-wrapper-card {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+      }
+
+      .perth-table thead th {
+        background: #f1f5f9 !important;
+        color: #0f172a !important;
+        border-bottom: 2px solid #94a3b8 !important;
+      }
+
+      .perth-table td {
+        border-bottom: 1px solid #e2e8f0 !important;
+      }
+
+      .activity-item {
+        background: #f8fafc !important;
+        border: 1px solid #e2e8f0 !important;
+      }
+
+      .solat-tag, .stay-pill, .act-time-tag {
+        border: 1px solid #cbd5e1 !important;
+        background: transparent !important;
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SVG VECTOR SYMBOLS (ZERO EMOJIS) -->
+  <svg style="display: none;">
+    <symbol id="icon-compass" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+    </symbol>
+    <symbol id="icon-calendar" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </symbol>
+    <symbol id="icon-clock" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <polyline points="12 6 12 12 16 14"></polyline>
+    </symbol>
+    <symbol id="icon-map-pin" viewBox="0 0 24 24">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </symbol>
+    <symbol id="icon-check" viewBox="0 0 24 24">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </symbol>
+    <symbol id="icon-edit" viewBox="0 0 24 24">
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+    </symbol>
+    <symbol id="icon-trash" viewBox="0 0 24 24">
+      <polyline points="3 6 5 6 21 6"></polyline>
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+    </symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </symbol>
+    <symbol id="icon-printer" viewBox="0 0 24 24">
+      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+      <rect x="6" y="14" width="12" height="8"></rect>
+    </symbol>
+    <symbol id="icon-download" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="7 10 12 15 17 10"></polyline>
+      <line x1="12" y1="15" x2="12" y2="3"></line>
+    </symbol>
+    <symbol id="icon-upload" viewBox="0 0 24 24">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </symbol>
+    <symbol id="icon-mosque" viewBox="0 0 24 24">
+      <path d="M12 3c-1.5 2-3 3.5-3 5.5a3 3 0 0 0 6 0c0-2-1.5-3.5-3-5.5z"></path>
+      <path d="M4 10v11h16V10"></path>
+      <path d="M9 21v-6a3 3 0 0 1 6 0v6"></path>
+    </symbol>
+    <symbol id="icon-table" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="3" y1="15" x2="21" y2="15"></line>
+      <line x1="12" y1="3" x2="12" y2="21"></line>
+    </symbol>
+    <symbol id="icon-dollar" viewBox="0 0 24 24">
+      <line x1="12" y1="1" x2="12" y2="23"></line>
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+    </symbol>
+    <symbol id="icon-briefcase" viewBox="0 0 24 24">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+    </symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"></circle>
+      <line x1="12" y1="16" x2="12" y2="12"></line>
+      <line x1="12" y1="8" x2="12.01" y2="8"></line>
+    </symbol>
+  </svg>
+
+  <!-- TOP STICKY APP HEADER -->
+  <header class="top-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="brand-icon-box">
+          <svg class="svg-icon"><use href="#icon-compass"></use></svg>
+        </div>
+        <div class="brand-text">
+          <h1>Perth Itinerary</h1>
+          <span>28 Aug – 5 Sep 2026 • Western Australia</span>
+        </div>
+      </div>
+
+      <!-- Navigation Sections Tabs -->
+      <div class="nav-section-tabs">
+        <button class="tab-btn active" data-target="sectionItinerary">
+          <svg class="svg-icon"><use href="#icon-table"></use></svg>
+          <span>Itinerary Table</span>
+        </button>
+        <button class="tab-btn" data-target="sectionBudget">
+          <svg class="svg-icon"><use href="#icon-dollar"></use></svg>
+          <span>Expenses</span>
+        </button>
+        <button class="tab-btn" data-target="sectionMosque">
+          <svg class="svg-icon"><use href="#icon-mosque"></use></svg>
+          <span>Solat Guide</span>
+        </button>
+        <button class="tab-btn" data-target="sectionPacking">
+          <svg class="svg-icon"><use href="#icon-briefcase"></use></svg>
+          <span>Packing List</span>
+        </button>
+      </div>
+
+      <!-- Global Actions -->
+      <div class="header-actions">
+        <button class="btn btn-primary" id="btnHeaderAddDay">
+          <svg class="svg-icon"><use href="#icon-plus"></use></svg>
+          <span>Add Day</span>
+        </button>
+        <button class="btn btn-outline" id="btnInstallApp" title="Install as Mobile App">
+          <svg class="svg-icon"><use href="#icon-download"></use></svg>
+          <span>Install</span>
+        </button>
+        <button class="btn btn-outline" id="btnPrintPdf" title="Print A4 PDF">
+          <svg class="svg-icon"><use href="#icon-printer"></use></svg>
+          <span>Print</span>
+        </button>
+        <button class="btn btn-outline btn-icon-only" id="btnBackup" title="Export Backup JSON">
+          <svg class="svg-icon"><use href="#icon-download"></use></svg>
+        </button>
+        <button class="btn btn-outline btn-icon-only" id="btnRestore" title="Restore JSON">
+          <svg class="svg-icon"><use href="#icon-upload"></use></svg>
+        </button>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+        <button class="btn btn-outline btn-icon-only" id="btnThemeToggle" title="Toggle Light/Dark Theme">
+          <svg class="svg-icon" id="themeSvg"><use href="#icon-moon"></use></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="main-container">
+
+    <!-- ==========================================================================
+         SECTION 1: THE CORE ITINERARY TABLE (FRONT & CENTER)
+         ========================================================================== -->
+    <section id="sectionItinerary" class="content-section active">
+      
+      <div class="table-wrapper-card">
+        <!-- Table Top Mini Status Bar -->
+        <div class="table-toolbar">
+          <div class="table-status-summary">
+            <span>Progress: <span class="status-counter-pill" id="statProgressText">0 / 28 Done</span></span>
+            <span>•</span>
+            <span>Sunset: <strong style="color:var(--gold);">~5:55 PM</strong></span>
+            <span>•</span>
+            <span style="color: var(--text-dim);">Changes auto-save offline</span>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-outline" id="btnResetData" style="font-size:0.75rem; padding:4px 8px;">
+              Reset to Docx
+            </button>
+          </div>
+        </div>
+
+        <!-- The Exact Docx Table Matrix (Enhanced) -->
+        <div class="table-scrollable">
+          <table class="perth-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">DATE</th>
+                <th style="width: 200px;">PLACE</th>
+                <th style="min-width: 380px;">ACTIVITIES</th>
+                <th style="width: 220px;">NOTE</th>
+                <th style="width: 130px;">NIGHT STAY</th>
+                <th style="width: 90px; text-align: right;">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="itineraryTableBody">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================================================
+         SECTION 2: EXPENSES & BUDGET
+         ========================================================================== -->
+    <section id="sectionBudget" class="content-section">
+      <div class="section-card-grid">
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--primary);"><use href="#icon-dollar"></use></svg>
+            Record Trip Expense
+          </h2>
+          <form id="formExpense">
+            <div class="form-row">
+              <label class="form-label">Item / Description</label>
+              <input type="text" id="expInputDesc" class="form-ctrl" placeholder="e.g. Caversham entry, Rottnest ferry" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Amount (AUD)</label>
+              <input type="number" step="0.01" id="expInputAud" class="form-ctrl" placeholder="0.00" required />
+            </div>
+            <div class="form-row">
+              <label class="form-label">Category</label>
+              <select id="expInputCat" class="form-ctrl">
+                <option value="Tickets">Tickets & Tours</option>
+                <option value="Food">Food & Chocolate</option>
+                <option value="Transport">Car & Fuel / Ferry</option>
+                <option value="Shopping">Shopping & Souvenirs</option>
+                <option value="Stay">Accommodation</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">Add Expense</button>
+          </form>
+        </div>
+
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--emerald);"><use href="#icon-compass"></use></svg>
+            Expense Summary
+          </h2>
+          <div style="margin-bottom: 16px;">
+            <div style="font-size: 1.8rem; font-weight: 800; color: var(--emerald);" id="totalAudDisplay">A$ 0.00</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Estimated ~ <strong id="totalMyrDisplay" style="color: var(--primary);">RM 0.00</strong> (Rate 1 AUD = 3.10 MYR)</div>
+          </div>
+
+          <div id="expenseListStack" style="display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto;">
+            <!-- Expense Items Rendered Here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         SECTION 3: SOLAT & MOSQUE GUIDE
+         ========================================================================== -->
+    <section id="sectionMosque" class="content-section">
+      <div class="section-card-grid">
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--emerald);"><use href="#icon-mosque"></use></svg>
+            Swan Valley Mosque
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+            <strong>Day 3 (30/8) Route:</strong> Close to Caversham Wildlife Park and chocolate factories. Peaceful community mosque with wudhu facilities.
+          </p>
+          <a href="https://maps.google.com/?q=Swan+Valley+Mosque" target="_blank" class="btn btn-outline" style="font-size: 0.78rem;">Open in Maps</a>
+        </div>
+
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--emerald);"><use href="#icon-mosque"></use></svg>
+            Perth Mosque (Northbridge)
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+            <strong>Day 4 (31/8) Route:</strong> Oldest mosque in WA (427 William St). Walking distance to Northbridge Halal eateries and Watertown Outlet.
+          </p>
+          <a href="https://maps.google.com/?q=Perth+Mosque+William+Street" target="_blank" class="btn btn-outline" style="font-size: 0.78rem;">Open in Maps</a>
+        </div>
+
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--emerald);"><use href="#icon-mosque"></use></svg>
+            Masjid Al-Taqwa (Mirrabooka)
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">
+            <strong>Day 6 (2/9) Route:</strong> Main northern route mosque when returning from Lancelin Sand Dunes & Pinnacles Desert.
+          </p>
+          <a href="https://maps.google.com/?q=Masjid+Al-Taqwa+Mirrabooka" target="_blank" class="btn btn-outline" style="font-size: 0.78rem;">Open in Maps</a>
+        </div>
+
+        <div class="tool-card">
+          <h2 class="tool-card-title">
+            <svg class="svg-icon" style="color:var(--gold);"><use href="#icon-info"></use></svg>
+            Travel Solat Tips
+          </h2>
+          <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 18px; line-height: 1.6;">
+            <li>Qibla direction in Perth is approximately <strong>296° West-Northwest</strong>.</li>
+            <li>Pack a compact spray water bottle in car for effortless roadside wudhu.</li>
+            <li>Travel prayer mats (sejadah travel) are ideal for Hamelin Bay and lookouts.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================================================
+         SECTION 4: PACKING LIST
+         ========================================================================== -->
+    <section id="sectionPacking" class="content-section">
+      <div class="section-card-grid">
+        <div class="tool-card">
+          <h2 class="tool-card-title"><svg class="svg-icon"><use href="#icon-briefcase"></use></svg> Travel Documents & Cards</h2>
+          <div id="packListDocs"></div>
+        </div>
+        <div class="tool-card">
+          <h2 class="tool-card-title"><svg class="svg-icon"><use href="#icon-compass"></use></svg> Gear & Clothing</h2>
+          <div id="packListGear"></div>
+        </div>
+        <div class="tool-card">
+          <h2 class="tool-card-title"><svg class="svg-icon"><use href="#icon-mosque"></use></svg> Solat & Personal</h2>
+          <div id="packListPersonal"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================================================
+       MODALS: ADD / EDIT DAY & ACTIVITY
+       ========================================================================== -->
+  <!-- Day Modal -->
+  <div class="modal-backdrop" id="modalDay">
+    <div class="modal-dialog">
+      <div class="modal-header-bar">
+        <h3 id="modalDayTitle"><svg class="svg-icon"><use href="#icon-calendar"></use></svg> Day Details</h3>
+        <button class="btn-act-sub close-modal" data-modal="modalDay"><svg class="svg-icon"><use href="#icon-plus" style="transform:rotate(45deg);"></use></svg></button>
+      </div>
+      <form id="formDay">
+        <div class="modal-content-body">
+          <input type="hidden" id="dayInputId" />
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div>
+              <label class="form-label">Date (e.g. 28/8)</label>
+              <input type="text" id="dayInputDate" class="form-ctrl" required />
+            </div>
+            <div>
+              <label class="form-label">Day of Week</label>
+              <input type="text" id="dayInputDayName" class="form-ctrl" required />
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Place / Region</label>
+            <input type="text" id="dayInputPlace" class="form-ctrl" placeholder="e.g. Fremantle, Swan Valley" required />
+          </div>
+          <div>
+            <label class="form-label">Night Stay</label>
+            <input type="text" id="dayInputStay" class="form-ctrl" placeholder="e.g. Perth" required />
+          </div>
+          <div>
+            <label class="form-label">Note / Driving & Solat Info</label>
+            <textarea id="dayInputNote" class="form-ctrl" rows="3" placeholder="Depart times, mosque stops, tips..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer-bar">
+          <button type="button" class="btn btn-outline close-modal" data-modal="modalDay">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Day</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Activity Modal -->
+  <div class="modal-backdrop" id="modalAct">
+    <div class="modal-dialog">
+      <div class="modal-header-bar">
+        <h3 id="modalActTitle"><svg class="svg-icon"><use href="#icon-edit"></use></svg> Activity Details</h3>
+        <button class="btn-act-sub close-modal" data-modal="modalAct"><svg class="svg-icon"><use href="#icon-plus" style="transform:rotate(45deg);"></use></svg></button>
+      </div>
+      <form id="formAct">
+        <div class="modal-content-body">
+          <input type="hidden" id="actInputDayId" />
+          <input type="hidden" id="actInputActId" />
+          <div>
+            <label class="form-label">Activity Description</label>
+            <input type="text" id="actInputTitle" class="form-ctrl" placeholder="e.g. Fremantle Markets, Caversham Wildlife Park" required />
+          </div>
+
+          <!-- Themed Custom Time Picker Section -->
+          <div>
+            <label class="form-label" style="margin-bottom: 8px;">Time Schedule (Auto-Sequenced)</label>
+            <div class="time-selector-grid">
+              <div>
+                <span style="font-size:0.74rem; color:var(--text-dim); display:block; margin-bottom:4px; font-weight:600;">Start Time</span>
+                <div class="themed-time-box">
+                  <select id="actStartHour" class="themed-select" title="Start Hour">
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09" selected>09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
+                  <span class="time-sep">:</span>
+                  <select id="actStartMinute" class="themed-select" title="Start Minute">
+                    <option value="00" selected>00</option>
+                    <option value="05">05</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                    <option value="35">35</option>
+                    <option value="40">40</option>
+                    <option value="45">45</option>
+                    <option value="50">50</option>
+                    <option value="55">55</option>
+                  </select>
+                  <div class="ampm-switch">
+                    <button type="button" class="ampm-toggle-btn active" id="btnStartAm" data-period="AM">AM</button>
+                    <button type="button" class="ampm-toggle-btn" id="btnStartPm" data-period="PM">PM</button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span style="font-size:0.74rem; color:var(--text-dim); display:block; margin-bottom:4px; font-weight:600;">End Time (Optional)</span>
+                <div class="themed-time-box">
+                  <select id="actEndHour" class="themed-select" title="End Hour">
+                    <option value="">--</option>
+                    <option value="01">01</option>
+                    <option value="02">02</option>
+                    <option value="03">03</option>
+                    <option value="04">04</option>
+                    <option value="05">05</option>
+                    <option value="06">06</option>
+                    <option value="07">07</option>
+                    <option value="08">08</option>
+                    <option value="09">09</option>
+                    <option value="10">10</option>
+                    <option value="11">11</option>
+                    <option value="12">12</option>
+                  </select>
+                  <span class="time-sep">:</span>
+                  <select id="actEndMinute" class="themed-select" title="End Minute">
+                    <option value="00">00</option>
+                    <option value="05">05</option>
+                    <option value="10">10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                    <option value="25">25</option>
+                    <option value="30">30</option>
+                    <option value="35">35</option>
+                    <option value="40">40</option>
+                    <option value="45">45</option>
+                    <option value="50">50</option>
+                    <option value="55">55</option>
+                  </select>
+                  <div class="ampm-switch">
+                    <button type="button" class="ampm-toggle-btn" id="btnEndAm" data-period="AM">AM</button>
+                    <button type="button" class="ampm-toggle-btn active" id="btnEndPm" data-period="PM">PM</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label">Show Times / Extra Notes (Optional)</label>
+            <input type="text" id="actInputTimeNote" class="form-ctrl" placeholder="e.g. Shows: 10am, 1pm, 3pm or Sunset view" />
+          </div>
+
+          <div>
+            <label class="form-label">Google Maps Link (Optional)</label>
+            <input type="url" id="actInputMaps" class="form-ctrl" placeholder="https://maps.google.com/?q=..." />
+          </div>
+        </div>
+        <div class="modal-footer-bar">
+          <button type="button" class="btn btn-outline close-modal" data-modal="modalAct">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save & Auto-Sequence</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-box" id="toast">
+    <svg class="svg-icon"><use href="#icon-check"></use></svg>
+    <span id="toastMsg">Saved offline</span>
+  </div>
+
+  <!-- ==========================================================================
+       7. LOGIC, DATA STORE & REACTIVE ENGINE
+       ========================================================================== -->
+  <script>
+    // Exact faithful template from Perth Intinerary.docx
+    const INITIAL_DOCX_DATA = [
+      {
+        id: 1,
+        date: "28/8",
+        dayName: "Friday",
+        place: "KLIA - Perth",
+        stay: "Perth",
+        note: "Depart 2.00 pm, Arrive 7.50 pm",
+        activities: [
+          { id: "act-1-1", title: "Car rental at Perth Airport", time: "Arrive 7.50 pm", maps: "https://maps.google.com/?q=Perth+Airport", done: false }
+        ]
+      },
+      {
+        id: 2,
+        date: "29/8",
+        dayName: "Saturday",
+        place: "Fremantle",
+        stay: "Perth",
+        note: "Weekend market day. Explore heritage precinct.",
+        activities: [
+          { id: "act-2-1", title: "Fremantle Markets (9am-6pm)", time: "9:00 AM – 6:00 PM", maps: "https://maps.google.com/?q=Fremantle+Markets", done: false },
+          { id: "act-2-2", title: "Fremantle Prison (9am-5pm)", time: "9:00 AM – 5:00 PM", maps: "https://maps.google.com/?q=Fremantle+Prison", done: false },
+          { id: "act-2-3", title: "Round House (10.30am-3.30pm)", time: "10:30 AM – 3:30 PM", maps: "https://maps.google.com/?q=The+Round+House+Fremantle", done: false },
+          { id: "act-2-4", title: "Bathers Beach (optional)", time: "Afternoon", maps: "https://maps.google.com/?q=Bathers+Beach+Fremantle", done: false },
+          { id: "act-2-5", title: "Fishing Boat Harbour (optional) Night market (check availability)", time: "Dinner / Night", maps: "https://maps.google.com/?q=Fremantle+Fishing+Boat+Harbour", done: false }
+        ]
+      },
+      {
+        id: 3,
+        date: "30/8",
+        dayName: "Sunday",
+        place: "Caversham / Swan Valley",
+        stay: "Perth",
+        note: "Depart 8.00am. *solat at Swan Valley Mosque",
+        activities: [
+          { id: "act-3-1", title: "Caversham Wildlife Park (9am-4.30pm) shows: 10am, 1pm, 3pm", time: "Shows: 10am, 1pm, 3pm", maps: "https://maps.google.com/?q=Caversham+Wildlife+Park", done: false },
+          { id: "act-3-2", title: "Bennet Brook Railway (11am-4pm)*cheap souvenirs", time: "11:00 AM – 4:00 PM", maps: "https://maps.google.com/?q=Bennett+Brook+Railway", done: false },
+          { id: "act-3-3", title: "Revolutions Transport Museum (10am-4pm)", time: "10:00 AM – 4:00 PM", maps: "https://maps.google.com/?q=Revolutions+Transport+Museum", done: false },
+          { id: "act-3-4", title: "Margaret River Chocolate (9am-5pm)", time: "9:00 AM – 5:00 PM", maps: "https://maps.google.com/?q=The+Margaret+River+Chocolate+Company+Swan+Valley", done: false },
+          { id: "act-3-5", title: "Whistler's Chocolate Co. & Café (9am-5pm)", time: "9:00 AM – 5:00 PM", maps: "https://maps.google.com/?q=Whistlers+Chocolate+Co", done: false },
+          { id: "act-3-6", title: "Visit the House of Honey (10am-5pm)", time: "10:00 AM – 5:00 PM", maps: "https://maps.google.com/?q=House+of+Honey+Swan+Valley", done: false },
+          { id: "act-3-7", title: "Perth Observatory (1pm-4pm)", time: "1:00 PM – 4:00 PM", maps: "https://maps.google.com/?q=Perth+Observatory", done: false },
+          { id: "act-3-8", title: "Solat at Swan Valley Mosque", time: "Midday Solat", maps: "https://maps.google.com/?q=Swan+Valley+Mosque", done: false },
+          { id: "act-3-9", title: "Zigzag Scenic Drive (watch sunset)", time: "Sunset (~5:55 PM)", maps: "https://maps.google.com/?q=Zig+Zag+Scenic+Drive", done: false }
+        ]
+      },
+      {
+        id: 4,
+        date: "31/8",
+        dayName: "Monday",
+        place: "Fremantle / Perth",
+        stay: "Perth",
+        note: "Whale watching cruise & Perth city exploration.",
+        activities: [
+          { id: "act-4-1", title: "Whale watching depart from Fremantle (9.00am)", time: "9:00 AM", maps: "https://maps.google.com/?q=Fremantle+Whale+Watching", done: false },
+          { id: "act-4-2", title: "King's Park & Botanic Garden", time: "Midday", maps: "https://maps.google.com/?q=Kings+Park+and+Botanic+Garden", done: false },
+          { id: "act-4-3", title: "Elizabeth Quay", time: "Afternoon", maps: "https://maps.google.com/?q=Elizabeth+Quay", done: false },
+          { id: "act-4-4", title: "Murray Street mall", time: "Shopping", maps: "https://maps.google.com/?q=Murray+Street+Mall", done: false },
+          { id: "act-4-5", title: "Perth Mosque (Northbridge)", time: "Solat", maps: "https://maps.google.com/?q=Perth+Mosque", done: false },
+          { id: "act-4-6", title: "Watertown Brand Outlet Centre", time: "Outlet Shopping", maps: "https://maps.google.com/?q=Watertown+Brand+Outlet", done: false }
+        ]
+      },
+      {
+        id: 5,
+        date: "1/9",
+        dayName: "Tuesday",
+        place: "Rottnest Island",
+        stay: "Perth",
+        note: "7 mins drive to Fremantle (B Shed and Northport)",
+        activities: [
+          { id: "act-5-1", title: "Fremantle (Rottnest Express B Shed and Northport) - ferry depart Fremantle 7.30am - depart Rottnest island 2.30pm", time: "Ferry: 7:30 AM → 2:30 PM", maps: "https://maps.google.com/?q=Rottnest+Express+B+Shed", done: false },
+          { id: "act-5-2", title: "Hire electric bike/bus tour (Meet Quokkas!)", time: "8:30 AM – 2:00 PM", maps: "https://maps.google.com/?q=Rottnest+Island", done: false }
+        ]
+      },
+      {
+        id: 6,
+        date: "2/9",
+        dayName: "Wednesday",
+        place: "Lancelin & Pinnacles",
+        stay: "Perth",
+        note: "*solat at Masjid Al-Taqwa on route",
+        activities: [
+          { id: "act-6-1", title: "Two Rocks & The King Neptune Statue", time: "Morning stop", maps: "https://maps.google.com/?q=King+Neptune+Statue", done: false },
+          { id: "act-6-2", title: "Lancelin Sand Dunes (8am-7pm)", time: "8:00 AM – 7:00 PM", maps: "https://maps.google.com/?q=Lancelin+Sand+Dunes", done: false },
+          { id: "act-6-3", title: "Pinnacles Desert (9.30am-4.30pm)", time: "9:30 AM – 4:30 PM", maps: "https://maps.google.com/?q=The+Pinnacles+Desert", done: false },
+          { id: "act-6-4", title: "Solat at Masjid Al-Taqwa", time: "Return route", maps: "https://maps.google.com/?q=Masjid+Al-Taqwa+Mirrabooka", done: false }
+        ]
+      },
+      {
+        id: 7,
+        date: "3/9",
+        dayName: "Thursday",
+        place: "Mandurah / Hamelin Bay / Margaret River",
+        stay: "Perth",
+        note: "*solat at the park / scenic rest area",
+        activities: [
+          { id: "act-7-1", title: "Mandurah Dolphine Quay (watch dolphine)", time: "Morning", maps: "https://maps.google.com/?q=Dolphin+Quay+Mandurah", done: false },
+          { id: "act-7-2", title: "Hamelin Bay Boat Ramp (watch string ray)", time: "Midday", maps: "https://maps.google.com/?q=Hamelin+Bay+Boat+Ramp", done: false },
+          { id: "act-7-3", title: "Margaret River Chocolate (9am-5pm)", time: "9:00 AM – 5:00 PM", maps: "https://maps.google.com/?q=The+Margaret+River+Chocolate+Company", done: false },
+          { id: "act-7-4", title: "Canal Rock (sunset view)", time: "Sunset (~5:55 PM)", maps: "https://maps.google.com/?q=Canal+Rocks", done: false },
+          { id: "act-7-5", title: "Solat at the park", time: "Evening Solat", maps: "https://maps.google.com/?q=Margaret+River", done: false }
+        ]
+      },
+      {
+        id: 8,
+        date: "4/9",
+        dayName: "Friday",
+        place: "Hiking / Picnic",
+        stay: "Perth",
+        note: "Relaxing scenic nature day & picnic",
+        activities: [
+          { id: "act-8-1", title: "Golden View Lookout (park at South Ledge Carpark)", time: "Morning", maps: "https://maps.google.com/?q=Golden+View+Lookout", done: false },
+          { id: "act-8-2", title: "Bold Park Fremantle Area (park at Reabold Hill Carpark 5.30am-7pm)", time: "5:30 AM – 7:00 PM", maps: "https://maps.google.com/?q=Reabold+Hill+Bold+Park", done: false },
+          { id: "act-8-3", title: "Relaxing afternoon picnic", time: "Afternoon", maps: "https://maps.google.com/?q=Kings+Park", done: false }
+        ]
+      },
+      {
+        id: 9,
+        date: "5/9",
+        dayName: "Saturday",
+        place: "Perth-KLIA",
+        stay: "Flight / KLIA",
+        note: "Check out 11am. Return Car rental at Perth Airport. Depart 8.50 pm, Arrive 2.25am",
+        activities: [
+          { id: "act-9-1", title: "Check out 11am", time: "11:00 AM", maps: "https://maps.google.com/?q=Perth", done: false },
+          { id: "act-9-2", title: "Return Car rental at Perth Airport", time: "5:30 PM", maps: "https://maps.google.com/?q=Perth+Airport+Car+Rental", done: false },
+          { id: "act-9-3", title: "Flight: Perth to KLIA (Depart 8.50 pm, Arrive 2.25am)", time: "Depart 8:50 PM", maps: "https://maps.google.com/?q=Perth+Airport", done: false }
+        ]
+      }
+    ];
+
+    const PACKING_DATA = {
+      docs: [
+        "Passports (min. 6 months validity)",
+        "Australian ETA Tourist Visa grant notice",
+        "International Driving Permit (IDP) & Malaysian License",
+        "Flight E-Tickets & Car rental booking voucher",
+        "Overseas activated travel cards (Wise / BigPay)"
+      ],
+      gear: [
+        "Type I 3-pin Australian Power Adapter & multi-plug",
+        "Windbreaker / Light warm jacket for coastal evenings",
+        "Sunglasses & Sunscreen (SPF 50+)",
+        "Comfortable walking & hiking shoes"
+      ],
+      personal: [
+        "Travel prayer mat (Sejadah travel)",
+        "Spray water bottle for wudhu on road trips",
+        "Modest prayer garments (Telekung)",
+        "Personal medications & motion sickness pills for Rottnest ferry"
+      ]
+    };
+
+    const V2_STORAGE_KEY = "perth_itinerary_v2_data";
+    const V2_EXP_KEY = "perth_itinerary_v2_expenses";
+    const V2_PACK_KEY = "perth_itinerary_v2_packing";
+    const V2_THEME_KEY = "perth_itinerary_v2_theme";
+
+    function getLocal(key, def) {
+      try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : def;
+      } catch (e) {
+        return def;
+      }
+    }
+
+    function setLocal(key, val) {
+      try {
+        localStorage.setItem(key, JSON.stringify(val));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    let daysData = getLocal(V2_STORAGE_KEY, JSON.parse(JSON.stringify(INITIAL_DOCX_DATA)));
+    let expensesData = getLocal(V2_EXP_KEY, [
+      { id: 1, desc: "Car Rental & Airport Fee", aud: 520, cat: "Transport" },
+      { id: 2, desc: "Rottnest Express Ferry (2 Pax)", aud: 170, cat: "Tickets" }
+    ]);
+    let packingStatus = getLocal(V2_PACK_KEY, {});
+
+    // --- RENDER TABLE ---
+    function renderItineraryTable() {
+      const tbody = document.getElementById("itineraryTableBody");
+      if (!tbody) return;
+
+      let totalActs = 0;
+      let doneActs = 0;
+
+      tbody.innerHTML = daysData.map(day => {
+        // Ensure activities are sorted chronologically
+        day.activities = sortDayActivities(day.activities);
+        const acts = day.activities || [];
+        totalActs += acts.length;
+        acts.forEach(a => { if (a.done) doneActs++; });
+
+        const actsHtml = acts.length > 0
+          ? acts.map(act => `
+              <div class="activity-item ${act.done ? 'completed' : ''}" id="act-box-${act.id}">
+                <input type="checkbox" class="checkbox-act" data-dayid="${day.id}" data-actid="${act.id}" ${act.done ? 'checked' : ''} />
+                <div class="act-text-wrap">
+                  <div class="act-text">${escapeText(act.title)}</div>
+                  ${act.time ? `<div class="act-time-tag edit-act-time" data-dayid="${day.id}" data-actid="${act.id}" title="Click to edit time" style="cursor:pointer;"><svg class="svg-icon" style="width:0.85em; height:0.85em;"><use href="#icon-clock"></use></svg> <span>${escapeText(act.time)}</span></div>` : ''}
+                </div>
+                <div class="act-actions">
+                  ${act.maps ? `<a href="${act.maps}" target="_blank" rel="noopener" class="btn-act-sub" title="Open Map"><svg class="svg-icon"><use href="#icon-map-pin"></use></svg></a>` : ''}
+                  <button class="btn-act-sub edit-act" data-dayid="${day.id}" data-actid="${act.id}" title="Edit"><svg class="svg-icon"><use href="#icon-edit"></use></svg></button>
+                  <button class="btn-act-sub del del-act" data-dayid="${day.id}" data-actid="${act.id}" title="Delete"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+                </div>
+              </div>
+            `).join('')
+          : `<div style="font-size:0.78rem; color:var(--text-dim); padding:4px;">No activities listed.</div>`;
+
+        const hasSolat = day.note && day.note.toLowerCase().includes("solat");
+
+        return `
+          <tr class="row-day" data-dayid="${day.id}">
+            <td class="col-date">
+              <span class="date-main">${escapeText(day.date)}</span>
+              <span class="date-sub">${escapeText(day.dayName)}</span>
+            </td>
+
+            <td class="col-place">
+              <div class="place-name">${escapeText(day.place)}</div>
+            </td>
+
+            <td class="col-activities">
+              <div class="activity-items-stack">
+                ${actsHtml}
+              </div>
+              <button class="btn-inline-add" data-dayid="${day.id}">
+                <svg class="svg-icon"><use href="#icon-plus"></use></svg>
+                <span>Add Activity</span>
+              </button>
+            </td>
+
+            <td class="col-note">
+              <div class="note-content">${escapeText(day.note || "—")}</div>
+              ${hasSolat ? `<div class="solat-tag"><svg class="svg-icon"><use href="#icon-mosque"></use></svg> Solat stop</div>` : ''}
+            </td>
+
+            <td class="col-stay">
+              <span class="stay-pill">
+                <svg class="svg-icon"><use href="#icon-moon"></use></svg>
+                ${escapeText(day.stay || "Perth")}
+              </span>
+            </td>
+
+            <td class="col-actions">
+              <div class="actions-flex">
+                <button class="btn-act-sub edit-day" data-dayid="${day.id}" title="Edit Day"><svg class="svg-icon"><use href="#icon-edit"></use></svg></button>
+                <button class="btn-act-sub del del-day" data-dayid="${day.id}" title="Delete Day"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById("statProgressText").textContent = `${doneActs} / ${totalActs} Done`;
+
+      bindTableEvents();
+    }
+
+    function bindTableEvents() {
+      // Toggle Activity Done Checkbox
+      document.querySelectorAll('.checkbox-act').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const dayId = parseInt(e.target.getAttribute('data-dayid'));
+          const actId = e.target.getAttribute('data-actid');
+          const day = daysData.find(d => d.id === dayId);
+          if (day) {
+            const act = day.activities.find(a => a.id === actId);
+            if (act) {
+              act.done = e.target.checked;
+              setLocal(V2_STORAGE_KEY, daysData);
+              const box = document.getElementById(`act-box-${act.id}`);
+              if (box) {
+                if (act.done) box.classList.add('completed');
+                else box.classList.remove('completed');
+              }
+              // Update count
+              let doneCount = 0;
+              let totalCount = 0;
+              daysData.forEach(d => (d.activities || []).forEach(a => { totalCount++; if (a.done) doneCount++; }));
+              document.getElementById("statProgressText").textContent = `${doneCount} / ${totalCount} Done`;
+              showNotification("Progress saved");
+            }
+          }
+        });
+      });
+
+      // Inline Add Activity Button
+      document.querySelectorAll('.btn-inline-add').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          openActModal(dayId, null);
+        });
+      });
+
+      // Edit Activity Button
+      document.querySelectorAll('.edit-act').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          const actId = btn.getAttribute('data-actid');
+          openActModal(dayId, actId);
+        });
+      });
+
+      // Direct Click on Time Tag to Edit Time
+      document.querySelectorAll('.edit-act-time').forEach(tag => {
+        tag.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const dayId = parseInt(tag.getAttribute('data-dayid'));
+          const actId = tag.getAttribute('data-actid');
+          openActModal(dayId, actId);
+          setTimeout(() => {
+            const startInput = document.getElementById('actInputStartTime');
+            if (startInput) startInput.focus();
+          }, 150);
+        });
+      });
+
+      // Delete Activity Button
+      document.querySelectorAll('.del-act').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          const actId = btn.getAttribute('data-actid');
+          if (confirm("Delete this activity?")) {
+            const day = daysData.find(d => d.id === dayId);
+            if (day) {
+              day.activities = day.activities.filter(a => a.id !== actId);
+              setLocal(V2_STORAGE_KEY, daysData);
+              renderItineraryTable();
+              showNotification("Activity deleted");
+            }
+          }
+        });
+      });
+
+      // Edit Day Button
+      document.querySelectorAll('.edit-day').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          openDayModal(dayId);
+        });
+      });
+
+      // Delete Day Button
+      document.querySelectorAll('.del-day').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const dayId = parseInt(btn.getAttribute('data-dayid'));
+          if (confirm(`Delete Day ${dayId}?`)) {
+            daysData = daysData.filter(d => d.id !== dayId);
+            setLocal(V2_STORAGE_KEY, daysData);
+            renderItineraryTable();
+            showNotification("Day removed");
+          }
+        });
+      });
+    }
+
+    // --- CHRONOLOGICAL TIME PARSING & SEQUENCING ENGINE ---
+    function extractTimeRange(str) {
+      if (!str) return { start: "", end: "" };
+      const regex = /(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?/gi;
+      const matches = [];
+      let m;
+      while ((m = regex.exec(str)) !== null) {
+        let hour = parseInt(m[1], 10);
+        const min = m[2] ? parseInt(m[2], 10) : 0;
+        const period = m[3] ? m[3].toLowerCase() : null;
+        
+        if (period === 'pm' && hour < 12) hour += 12;
+        else if (period === 'am' && hour === 12) hour = 0;
+        
+        const formatted = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+        matches.push(formatted);
+      }
+      return {
+        start: matches.length > 0 ? matches[0] : "",
+        end: matches.length > 1 ? matches[1] : ""
+      };
+    }
+
+    function parseActivityMinutes(act) {
+      if (act.startTime && /^\d{2}:\d{2}$/.test(act.startTime)) {
+        const [h, m] = act.startTime.split(':').map(Number);
+        return h * 60 + m;
+      }
+      const extracted = extractTimeRange(act.time || act.title || "");
+      if (extracted.start) {
+        const [h, m] = extracted.start.split(':').map(Number);
+        return h * 60 + m;
+      }
+      return 9999;
+    }
+
+    function sortDayActivities(activities) {
+      if (!activities || !Array.isArray(activities)) return [];
+      return [...activities].sort((a, b) => parseActivityMinutes(a) - parseActivityMinutes(b));
+    }
+
+    function convert24To12(time24) {
+      if (!time24 || !/^\d{2}:\d{2}$/.test(time24)) return "";
+      const [h, m] = time24.split(':').map(Number);
+      const period = h >= 12 ? "PM" : "AM";
+      const displayH = h % 12 === 0 ? 12 : h % 12;
+      const displayM = m === 0 ? "" : `:${String(m).padStart(2, '0')}`;
+      return `${displayH}${displayM} ${period}`;
+    }
+
+    function formatTimeLabel(startTime, endTime, extraNote) {
+      let label = "";
+      if (startTime) {
+        label = convert24To12(startTime);
+        if (endTime) {
+          label += ` – ${convert24To12(endTime)}`;
+        }
+      }
+      if (extraNote) {
+        label = label ? `${label} (${extraNote})` : extraNote;
+      }
+      return label;
+    }
+
+    let startPeriod = "AM";
+    let endPeriod = "PM";
+
+    function setStartAmPm(period) {
+      startPeriod = period;
+      document.getElementById("btnStartAm").classList.toggle("active", period === "AM");
+      document.getElementById("btnStartPm").classList.toggle("active", period === "PM");
+    }
+
+    function setEndAmPm(period) {
+      endPeriod = period;
+      document.getElementById("btnEndAm").classList.toggle("active", period === "AM");
+      document.getElementById("btnEndPm").classList.toggle("active", period === "PM");
+    }
+
+    function populateTimeSelectors(startTimeStr, endTimeStr) {
+      // Start Time
+      if (startTimeStr && /^\d{2}:\d{2}$/.test(startTimeStr)) {
+        const [h24, m] = startTimeStr.split(':').map(Number);
+        const p = h24 >= 12 ? "PM" : "AM";
+        const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+        document.getElementById("actStartHour").value = String(h12).padStart(2, '0');
+        const mNearest = String(Math.round(m / 5) * 5 % 60).padStart(2, '0');
+        const mSelect = document.getElementById("actStartMinute");
+        if ([...mSelect.options].some(o => o.value === String(m).padStart(2, '0'))) {
+          mSelect.value = String(m).padStart(2, '0');
+        } else {
+          mSelect.value = mNearest;
+        }
+        setStartAmPm(p);
+      } else {
+        document.getElementById("actStartHour").value = "09";
+        document.getElementById("actStartMinute").value = "00";
+        setStartAmPm("AM");
+      }
+
+      // End Time
+      if (endTimeStr && /^\d{2}:\d{2}$/.test(endTimeStr)) {
+        const [h24, m] = endTimeStr.split(':').map(Number);
+        const p = h24 >= 12 ? "PM" : "AM";
+        const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
+        document.getElementById("actEndHour").value = String(h12).padStart(2, '0');
+        const mNearest = String(Math.round(m / 5) * 5 % 60).padStart(2, '0');
+        const mSelect = document.getElementById("actEndMinute");
+        if ([...mSelect.options].some(o => o.value === String(m).padStart(2, '0'))) {
+          mSelect.value = String(m).padStart(2, '0');
+        } else {
+          mSelect.value = mNearest;
+        }
+        setEndAmPm(p);
+      } else {
+        document.getElementById("actEndHour").value = "";
+        document.getElementById("actEndMinute").value = "00";
+        setEndAmPm("PM");
+      }
+    }
+
+    function getSelectedTime(hourElemId, minElemId, period) {
+      const hVal = document.getElementById(hourElemId).value;
+      if (!hVal) return "";
+      let h = parseInt(hVal, 10);
+      const m = document.getElementById(minElemId).value || "00";
+      if (period === "PM" && h < 12) h += 12;
+      if (period === "AM" && h === 12) h = 0;
+      return `${String(h).padStart(2, '0')}:${m}`;
+    }
+
+    // --- MODAL HANDLERS ---
+    function openDayModal(dayId) {
+      const modal = document.getElementById("modalDay");
+      const form = document.getElementById("formDay");
+      form.reset();
+
+      if (dayId) {
+        const day = daysData.find(d => d.id === dayId);
+        if (!day) return;
+        document.getElementById("modalDayTitle").innerHTML = `<svg class="svg-icon"><use href="#icon-edit"></use></svg> Edit Day ${day.id}`;
+        document.getElementById("dayInputId").value = day.id;
+        document.getElementById("dayInputDate").value = day.date || "";
+        document.getElementById("dayInputDayName").value = day.dayName || "";
+        document.getElementById("dayInputPlace").value = day.place || "";
+        document.getElementById("dayInputStay").value = day.stay || "";
+        document.getElementById("dayInputNote").value = day.note || "";
+      } else {
+        document.getElementById("modalDayTitle").innerHTML = `<svg class="svg-icon"><use href="#icon-plus"></use></svg> Add New Day`;
+        document.getElementById("dayInputId").value = "";
+      }
+      modal.classList.add("open");
+    }
+
+    function openActModal(dayId, actId) {
+      const modal = document.getElementById("modalAct");
+      const form = document.getElementById("formAct");
+      form.reset();
+
+      document.getElementById("actInputDayId").value = dayId;
+      document.getElementById("actInputActId").value = actId || "";
+
+      if (actId) {
+        const day = daysData.find(d => d.id === dayId);
+        const act = day ? day.activities.find(a => a.id === actId) : null;
+        if (act) {
+          document.getElementById("modalActTitle").innerHTML = `<svg class="svg-icon"><use href="#icon-edit"></use></svg> Edit Activity`;
+          document.getElementById("actInputTitle").value = act.title || "";
+          document.getElementById("actInputMaps").value = act.maps || "";
+          document.getElementById("actInputTimeNote").value = act.timeNote || "";
+
+          let sTime = act.startTime;
+          let eTime = act.endTime;
+          if (!sTime) {
+            const extracted = extractTimeRange(act.time || act.title || "");
+            sTime = extracted.start;
+            eTime = extracted.end;
+          }
+          populateTimeSelectors(sTime, eTime);
+        }
+      } else {
+        document.getElementById("modalActTitle").innerHTML = `<svg class="svg-icon"><use href="#icon-plus"></use></svg> Add Activity`;
+        populateTimeSelectors("09:00", "");
+      }
+      modal.classList.add("open");
+    }
+
+    function setupModals() {
+      // Close Modal Buttons
+      document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mId = btn.getAttribute('data-modal');
+          const m = document.getElementById(mId);
+          if (m) m.classList.remove('open');
+        });
+      });
+
+      // AM/PM Toggle Buttons
+      document.getElementById("btnStartAm").addEventListener("click", () => setStartAmPm("AM"));
+      document.getElementById("btnStartPm").addEventListener("click", () => setStartAmPm("PM"));
+      document.getElementById("btnEndAm").addEventListener("click", () => setEndAmPm("AM"));
+      document.getElementById("btnEndPm").addEventListener("click", () => setEndAmPm("PM"));
+
+      // Save Day Form
+      document.getElementById("formDay").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const idVal = document.getElementById("dayInputId").value;
+        const date = document.getElementById("dayInputDate").value.trim();
+        const dayName = document.getElementById("dayInputDayName").value.trim();
+        const place = document.getElementById("dayInputPlace").value.trim();
+        const stay = document.getElementById("dayInputStay").value.trim();
+        const note = document.getElementById("dayInputNote").value.trim();
+
+        if (idVal) {
+          const day = daysData.find(d => d.id === parseInt(idVal));
+          if (day) {
+            day.date = date;
+            day.dayName = dayName;
+            day.place = place;
+            day.stay = stay;
+            day.note = note;
+          }
+        } else {
+          const newId = daysData.length > 0 ? Math.max(...daysData.map(d => d.id)) + 1 : 1;
+          daysData.push({ id: newId, date, dayName, place, stay, note, activities: [] });
+        }
+
+        setLocal(V2_STORAGE_KEY, daysData);
+        document.getElementById("modalDay").classList.remove("open");
+        renderItineraryTable();
+        showNotification("Day saved");
+      });
+
+      // Save Activity Form (With Auto-Sequencing)
+      document.getElementById("formAct").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const dayId = parseInt(document.getElementById("actInputDayId").value);
+        const actId = document.getElementById("actInputActId").value;
+        const title = document.getElementById("actInputTitle").value.trim();
+        const startTime = getSelectedTime("actStartHour", "actStartMinute", startPeriod);
+        const endTime = getSelectedTime("actEndHour", "actEndMinute", endPeriod);
+        const timeNote = document.getElementById("actInputTimeNote").value.trim();
+        const maps = document.getElementById("actInputMaps").value.trim();
+
+        const day = daysData.find(d => d.id === dayId);
+        if (!day) return;
+
+        // Compute formatted display time
+        const timeDisplay = formatTimeLabel(startTime, endTime, timeNote);
+
+        if (actId) {
+          const act = day.activities.find(a => a.id === actId);
+          if (act) {
+            act.title = title;
+            act.startTime = startTime;
+            act.endTime = endTime;
+            act.timeNote = timeNote;
+            act.time = timeDisplay;
+            act.maps = maps;
+          }
+        } else {
+          day.activities.push({
+            id: `act-${dayId}-${Date.now().toString().slice(-4)}`,
+            title,
+            startTime,
+            endTime,
+            timeNote,
+            time: timeDisplay,
+            maps,
+            done: false
+          });
+        }
+
+        // Auto-sequence activities chronologically by time
+        day.activities = sortDayActivities(day.activities);
+
+        setLocal(V2_STORAGE_KEY, daysData);
+        document.getElementById("modalAct").classList.remove("open");
+        renderItineraryTable();
+        showNotification("Activity saved & chronologically arranged");
+      });
+    }
+
+    // --- EXPENSES ENGINE ---
+    function renderExpenses() {
+      const container = document.getElementById("expenseListStack");
+      if (!container) return;
+
+      let totalAud = 0;
+      expensesData.forEach(e => totalAud += (parseFloat(e.aud) || 0));
+      const totalMyr = totalAud * 3.10;
+
+      document.getElementById("totalAudDisplay").textContent = `A$ ${totalAud.toFixed(2)}`;
+      document.getElementById("totalMyrDisplay").textContent = `RM ${totalMyr.toFixed(2)}`;
+
+      if (expensesData.length === 0) {
+        container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dim); padding:8px;">No expenses recorded yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = expensesData.map((item, idx) => `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-alt); border:1px solid var(--border-color); padding:7px 10px; border-radius:var(--radius-sm);">
+          <div>
+            <div style="font-weight:600; font-size:0.84rem;">${escapeText(item.desc)}</div>
+            <div style="font-size:0.72rem; color:var(--text-muted);">${escapeText(item.cat)}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-weight:700; color:var(--emerald); font-family:var(--font-mono); font-size:0.85rem;">A$ ${parseFloat(item.aud).toFixed(2)}</span>
+            <button class="btn-act-sub del del-exp" data-index="${idx}"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.del-exp').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-index'));
+          expensesData.splice(idx, 1);
+          setLocal(V2_EXP_KEY, expensesData);
+          renderExpenses();
+          showNotification("Expense removed");
+        });
+      });
+    }
+
+    function setupExpenseForm() {
+      const form = document.getElementById("formExpense");
+      if (!form) return;
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const desc = document.getElementById("expInputDesc").value.trim();
+        const aud = parseFloat(document.getElementById("expInputAud").value);
+        const cat = document.getElementById("expInputCat").value;
+
+        if (!desc || isNaN(aud)) return;
+        expensesData.unshift({ id: Date.now(), desc, aud, cat });
+        setLocal(V2_EXP_KEY, expensesData);
+        renderExpenses();
+        form.reset();
+        showNotification("Expense recorded");
+      });
+    }
+
+    // --- PACKING LIST ENGINE ---
+    function renderPackingList() {
+      renderPackCat("packListDocs", PACKING_DATA.docs, "docs");
+      renderPackCat("packListGear", PACKING_DATA.gear, "gear");
+      renderPackCat("packListPersonal", PACKING_DATA.personal, "personal");
+    }
+
+    function renderPackCat(targetId, list, prefix) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+
+      el.innerHTML = list.map((item, idx) => {
+        const key = `p_${prefix}_${idx}`;
+        const isChecked = !!packingStatus[key];
+        return `
+          <div style="display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border-color); font-size:0.84rem;">
+            <input type="checkbox" class="checkbox-act pack-item-cb" data-key="${key}" ${isChecked ? 'checked' : ''} />
+            <span style="${isChecked ? 'text-decoration:line-through; opacity:0.5;' : ''}">${escapeText(item)}</span>
+          </div>
+        `;
+      }).join('');
+
+      el.querySelectorAll('.pack-item-cb').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const k = e.target.getAttribute('data-key');
+          packingStatus[k] = e.target.checked;
+          setLocal(V2_PACK_KEY, packingStatus);
+          renderPackingList();
+        });
+      });
+    }
+
+    // --- NAVIGATION & UTILITIES ---
+    function setupNavTabs() {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+
+          btn.classList.add('active');
+          const target = btn.getAttribute('data-target');
+          const section = document.getElementById(target);
+          if (section) section.classList.add('active');
+        });
+      });
+    }
+
+    function setupTheme() {
+      const savedTheme = localStorage.getItem(V2_THEME_KEY) || "dark";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      updateThemeIcon(savedTheme);
+
+      document.getElementById("btnThemeToggle").addEventListener("click", () => {
+        const cur = document.documentElement.getAttribute("data-theme") || "dark";
+        const next = cur === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        localStorage.setItem(V2_THEME_KEY, next);
+        updateThemeIcon(next);
+      });
+    }
+
+    function updateThemeIcon(theme) {
+      const svg = document.getElementById("themeSvg");
+      if (svg) {
+        svg.innerHTML = theme === "dark" ? `<use href="#icon-sun"></use>` : `<use href="#icon-moon"></use>`;
+      }
+    }
+
+    function showNotification(msg) {
+      const t = document.getElementById("toast");
+      const m = document.getElementById("toastMsg");
+      if (t && m) {
+        m.textContent = msg;
+        t.classList.add("show");
+        setTimeout(() => t.classList.remove("show"), 2200);
+      }
+    }
+
+    function escapeText(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function setupGlobalActions() {
+      // Add Day from Header
+      document.getElementById("btnHeaderAddDay").addEventListener("click", () => {
+        openDayModal(null);
+      });
+
+      // Print PDF
+      document.getElementById("btnPrintPdf").addEventListener("click", () => {
+        window.print();
+      });
+
+      // Backup JSON
+      document.getElementById("btnBackup").addEventListener("click", () => {
+        const payload = {
+          version: "V2-Table",
+          timestamp: new Date().toISOString(),
+          daysData,
+          expensesData,
+          packingStatus
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Perth_Itinerary_V2_Backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification("Backup JSON downloaded");
+      });
+
+      // Restore JSON
+      const restoreBtn = document.getElementById("btnRestore");
+      const fileInput = document.getElementById("importFileInput");
+      restoreBtn.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = (evt) => {
+          try {
+            const data = JSON.parse(evt.target.result);
+            if (data.daysData) {
+              daysData = data.daysData;
+              setLocal(V2_STORAGE_KEY, daysData);
+            }
+            if (data.expensesData) {
+              expensesData = data.expensesData;
+              setLocal(V2_EXP_KEY, expensesData);
+            }
+            if (data.packingStatus) {
+              packingStatus = data.packingStatus;
+              setLocal(V2_PACK_KEY, packingStatus);
+            }
+            renderItineraryTable();
+            renderExpenses();
+            renderPackingList();
+            showNotification("Data restored successfully!");
+          } catch (err) {
+            alert("Invalid backup file.");
+          }
+        };
+        r.readAsText(file);
+      });
+
+      // PWA Install Prompt Handling
+      let deferredInstallPrompt = null;
+      const installBtn = document.getElementById("btnInstallApp");
+      
+      window.addEventListener("beforeinstallprompt", (e) => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+        if (installBtn) {
+          installBtn.style.display = "inline-flex";
+          installBtn.classList.add("btn-primary");
+          installBtn.classList.remove("btn-outline");
+        }
+      });
+
+      if (installBtn) {
+        installBtn.addEventListener("click", async () => {
+          if (deferredInstallPrompt) {
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            if (outcome === "accepted") {
+              installBtn.style.display = "none";
+              showNotification("App installed successfully! 🎉");
+            }
+          } else {
+            // Friendly guide for iPhone / Android if prompt isn't directly triggerable
+            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (isIos) {
+              alert("📲 To Install on iPhone:\n1. Tap the Share button (square with arrow 📤) at the bottom.\n2. Scroll down and tap 'Add to Home Screen'.\n3. Tap 'Add' in the top right.");
+            } else {
+              alert("📲 To Install on Mobile:\n1. Tap the 3-dot menu (⋮) in Chrome / Edge.\n2. Tap 'Install app' or 'Add to Home screen'.");
+            }
+          }
+        });
+      }
+
+      // Reset to Original Docx
+      document.getElementById("btnResetData").addEventListener("click", () => {
+        if (confirm("Reset itinerary back to the original Perth Intinerary.docx data?")) {
+          daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
+          setLocal(V2_STORAGE_KEY, daysData);
+          renderItineraryTable();
+          showNotification("Reset to original docx");
+        }
+      });
+    }
+
+    // Initialize App & Register Service Worker
+    document.addEventListener("DOMContentLoaded", () => {
+      setupTheme();
+      setupNavTabs();
+      setupModals();
+      setupExpenseForm();
+      setupGlobalActions();
+      renderItineraryTable();
+      renderExpenses();
+      renderPackingList();
+
+      // Register PWA Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('PWA Service Worker registered'))
+          .catch((err) => console.log('SW registration note:', err));
+      }
+    });
+  </script>
+</body>
+</html>
