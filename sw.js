@@ -1,6 +1,7 @@
-const CACHE_NAME = 'perth-itinerary-v2';
+const CACHE_NAME = 'perth-itinerary-v3';
 const ASSETS = [
   './',
+  './index.html',
   './Perth_Itinerary_V2.html',
   './manifest.json',
   './icon-192.png',
@@ -9,8 +10,14 @@ const ASSETS = [
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS).catch((err) => console.log('Cache addAll error:', err));
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const url of ASSETS) {
+        try {
+          await cache.add(url);
+        } catch (err) {
+          console.warn('SW cache failed for:', url, err);
+        }
+      }
     }).then(() => self.skipWaiting())
   );
 });
@@ -29,8 +36,15 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    caches.match(e.request).then((res) => {
-      return res || fetch(e.request).catch(() => caches.match('./Perth_Itinerary_V2.html'));
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).then((networkRes) => {
+        if (networkRes && networkRes.status === 200 && networkRes.type === 'basic') {
+          const resClone = networkRes.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, resClone));
+        }
+        return networkRes;
+      }).catch(() => caches.match('./index.html') || caches.match('./'));
     })
   );
 });
