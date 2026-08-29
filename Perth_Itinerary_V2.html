@@ -15,14 +15,23 @@
   <meta name="apple-mobile-web-app-title" content="Perth Trip" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 
+  <!-- Firebase Realtime Collaboration SDK (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
     /* ==========================================================================
-       1. CORE DESIGN SYSTEM & THEME TOKENS
+       1. CORE DESIGN SYSTEM, MOTION TOKENS & SPRINGS
        ========================================================================== */
     :root {
       color-scheme: dark;
       --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+      /* Motion & Physics Curves */
+      --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --spring-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out: cubic-bezier(0, 0, 0.2, 1);
 
       /* Dark Theme (Default) - Refined Editorial Slate */
       --bg-app: #090e17;
@@ -40,19 +49,19 @@
       --primary: #0284c7;
       --primary-hover: #0369a1;
       --primary-light: #e0f2fe;
-      --primary-glow: rgba(2, 132, 199, 0.15);
+      --primary-glow: rgba(2, 132, 199, 0.2);
 
       --gold: #d97706;
       --gold-light: #fef3c7;
-      --gold-glow: rgba(217, 119, 6, 0.15);
+      --gold-glow: rgba(217, 119, 6, 0.2);
 
       --emerald: #059669;
       --emerald-light: #d1fae5;
-      --emerald-glow: rgba(5, 150, 105, 0.15);
+      --emerald-glow: rgba(5, 150, 105, 0.2);
 
       --purple: #7c3aed;
       --purple-light: #ede9fe;
-      --purple-glow: rgba(124, 58, 237, 0.15);
+      --purple-glow: rgba(124, 58, 237, 0.2);
 
       --rose: #e11d48;
       --rose-light: #ffe4e6;
@@ -66,7 +75,7 @@
       --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
       --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.5);
 
-      --transition: all 0.15s ease;
+      --transition: all 0.18s var(--spring-smooth);
     }
 
     [data-theme="light"] {
@@ -85,6 +94,136 @@
       --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
       --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
       --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Kinetic Spring Buttons & Tactile Scale */
+    .btn, .tab-btn, .btn-act-sub, .cloud-sync-pill, .checkbox-act {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s var(--spring-bounce), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:hover, .tab-btn:hover, .btn-act-sub:hover, .cloud-sync-pill:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn:active, .tab-btn:active, .btn-act-sub:active, .cloud-sync-pill:active {
+      transform: scale(0.94) translateY(0);
+    }
+
+    /* Water Ripple Effect */
+    .ripple-wave {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.28);
+      transform: scale(0);
+      animation: rippleAnim 0.5s ease-out forwards;
+      pointer-events: none;
+    }
+    [data-theme="light"] .ripple-wave {
+      background: rgba(0, 0, 0, 0.15);
+    }
+    @keyframes rippleAnim {
+      to {
+        transform: scale(4);
+        opacity: 0;
+      }
+    }
+
+    /* Live Remote Update Glow Effect */
+    @keyframes liveUpdateGlow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(2, 132, 199, 0.7);
+        background-color: rgba(2, 132, 199, 0.18);
+      }
+      50% {
+        box-shadow: 0 0 16px 2px rgba(2, 132, 199, 0.4);
+        background-color: rgba(2, 132, 199, 0.12);
+      }
+      100% {
+        box-shadow: none;
+        background-color: transparent;
+      }
+    }
+
+    .live-updated {
+      animation: liveUpdateGlow 1.8s ease-out;
+    }
+
+    /* Checkbox Bounce Animation */
+    @keyframes checkBounce {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35) rotate(-6deg); }
+      70% { transform: scale(0.9) rotate(3deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+    .check-bounce {
+      animation: checkBounce 0.35s var(--spring-bounce);
+    }
+
+    /* Row Staggered Slide-In */
+    @keyframes rowSlideFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .row-day {
+      animation: rowSlideFadeIn 0.35s var(--spring-smooth) both;
+    }
+
+    /* Cloud Sync Pill */
+    .cloud-sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: var(--radius-full);
+      background: var(--bg-card-alt);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .sync-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      transition: var(--transition);
+    }
+
+    .sync-dot.syncing {
+      background: var(--gold);
+      box-shadow: 0 0 8px var(--gold);
+      animation: pulseSync 0.9s infinite alternate;
+    }
+
+    .sync-dot.offline {
+      background: var(--rose);
+      box-shadow: 0 0 8px var(--rose);
+    }
+
+    @keyframes pulseSync {
+      from { opacity: 0.5; transform: scale(0.85); }
+      to { opacity: 1; transform: scale(1.15); }
+    }
+
+    .confetti-particle {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 2px;
+      pointer-events: none;
+      z-index: 9999;
     }
 
     /* Themed Time Selector UI */
@@ -1181,6 +1320,10 @@
 
       <!-- Global Actions -->
       <div class="header-actions">
+        <button class="cloud-sync-pill" id="btnSyncStatus" title="Live Collaborative Cloud Sync & Invite Link">
+          <span class="sync-dot" id="syncDot"></span>
+          <span id="syncText">Live Synced</span>
+        </button>
         <button class="btn btn-primary" id="btnHeaderAddDay">
           <svg class="svg-icon"><use href="#icon-plus"></use></svg>
           <span>Add Day</span>
@@ -1543,6 +1686,41 @@
     </div>
   </div>
 
+  <!-- Collaborative Room Modal -->
+  <div class="modal-backdrop" id="modalCollab">
+    <div class="modal-dialog">
+      <div class="modal-header-bar">
+        <h3><svg class="svg-icon" style="color:var(--primary);"><use href="#icon-compass"></use></svg> Live Collaboration Room</h3>
+        <button class="btn-act-sub close-modal" data-modal="modalCollab"><svg class="svg-icon"><use href="#icon-plus" style="transform:rotate(45deg);"></use></svg></button>
+      </div>
+      <div class="modal-content-body">
+        <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">
+          This web app is connected to the live cloud database. Any edits, checkboxes, notes, and expenses made by anyone are <strong>synced in real-time across all phones & PCs</strong>.
+        </p>
+        <div>
+          <label class="form-label">Active Trip Room Code</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="inputRoomId" class="form-ctrl" value="perth-trip-2026" />
+            <button type="button" class="btn btn-primary" id="btnSwitchRoom">Connect</button>
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Shareable Group Invite Link</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="inputShareUrl" class="form-ctrl" readonly />
+            <button type="button" class="btn btn-outline" id="btnCopyShare">Copy Link</button>
+          </div>
+        </div>
+        <div style="background:var(--bg-card-alt); border:1px solid var(--border-color); border-radius:var(--radius-sm); padding:10px 12px; font-size:0.78rem; color:var(--text-dim); line-height:1.5;">
+          ⚡ <strong>Collaborative Sync:</strong> Open this link on your friend's iPhone or Android. You can both edit days, add activities, and track expenses together live!
+        </div>
+      </div>
+      <div class="modal-footer-bar">
+        <button type="button" class="btn btn-outline close-modal" data-modal="modalCollab">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast-box" id="toast">
     <svg class="svg-icon"><use href="#icon-check"></use></svg>
@@ -1711,30 +1889,182 @@
     const V2_EXP_KEY = "perth_itinerary_v2_expenses";
     const V2_PACK_KEY = "perth_itinerary_v2_packing";
     const V2_THEME_KEY = "perth_itinerary_v2_theme";
-
-    function getLocal(key, def) {
-      try {
-        const val = localStorage.getItem(key);
-        return val ? JSON.parse(val) : def;
-      } catch (e) {
-        return def;
-      }
-    }
-
-    function setLocal(key, val) {
-      try {
-        localStorage.setItem(key, JSON.stringify(val));
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
     let daysData = getLocal(V2_STORAGE_KEY, JSON.parse(JSON.stringify(INITIAL_DOCX_DATA)));
     let expensesData = getLocal(V2_EXP_KEY, [
       { id: 1, desc: "Car Rental & Airport Fee", aud: 520, cat: "Transport" },
       { id: 2, desc: "Rottnest Express Ferry (2 Pax)", aud: 170, cat: "Tickets" }
     ]);
     let packingStatus = getLocal(V2_PACK_KEY, {});
+
+    // --- REALTIME COLLABORATIVE SYNC ENGINE ---
+    function initCollaborativeSync() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tripParam = urlParams.get('trip') || urlParams.get('room');
+      if (tripParam) {
+        currentRoomId = tripParam.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+      } else {
+        currentRoomId = localStorage.getItem('perth_room_id') || 'perth-trip-2026';
+      }
+      localStorage.setItem('perth_room_id', currentRoomId);
+
+      const roomInput = document.getElementById('inputRoomId');
+      if (roomInput) roomInput.value = currentRoomId;
+      updateShareUrl();
+
+      try {
+        if (typeof firebase !== "undefined" && !firebase.apps.length) {
+          firebase.initializeApp(FIREBASE_CONFIG);
+          db = firebase.database();
+
+          // Listen to connection status
+          const connectedRef = db.ref(".info/connected");
+          connectedRef.on("value", (snap) => {
+            isOnline = snap.val() === true;
+            updateSyncStatusUI(isOnline ? "live" : "offline");
+          });
+
+          // Subscribe to live Room updates
+          subscribeToRoom(currentRoomId);
+        } else if (typeof firebase !== "undefined" && firebase.apps.length) {
+          db = firebase.database();
+          subscribeToRoom(currentRoomId);
+        } else {
+          updateSyncStatusUI("offline");
+        }
+      } catch (err) {
+        console.warn("Firebase sync init note:", err);
+        updateSyncStatusUI("offline");
+      }
+    }
+
+    function updateSyncStatusUI(status) {
+      const dot = document.getElementById("syncDot");
+      const txt = document.getElementById("syncText");
+      if (!dot || !txt) return;
+
+      if (status === "live") {
+        dot.className = "sync-dot";
+        txt.textContent = "Live Synced";
+      } else if (status === "syncing") {
+        dot.className = "sync-dot syncing";
+        txt.textContent = "Syncing...";
+      } else {
+        dot.className = "sync-dot offline";
+        txt.textContent = "Offline (Local)";
+      }
+    }
+
+    function updateShareUrl() {
+      const shareInput = document.getElementById("inputShareUrl");
+      if (shareInput) {
+        const cleanUrl = window.location.origin + window.location.pathname;
+        shareInput.value = `${cleanUrl}?trip=${currentRoomId}`;
+      }
+    }
+
+    function subscribeToRoom(roomId) {
+      if (!db) return;
+      const roomRef = db.ref("rooms/" + roomId);
+
+      roomRef.on("value", (snapshot) => {
+        const data = snapshot.val();
+        if (data && data.daysData) {
+          isRemoteUpdating = true;
+          daysData = data.daysData;
+          if (data.expensesData) expensesData = data.expensesData;
+          if (data.packingStatus) packingStatus = data.packingStatus;
+
+          setLocal(V2_STORAGE_KEY, daysData);
+          setLocal(V2_EXP_KEY, expensesData);
+          setLocal(V2_PACK_KEY, packingStatus);
+
+          renderItineraryTable();
+          renderExpenses();
+          renderPackingList();
+          isRemoteUpdating = false;
+
+          // Pulse table to indicate remote synchronization
+          const tableCard = document.querySelector(".table-wrapper-card");
+          if (tableCard) {
+            tableCard.classList.remove("live-updated");
+            void tableCard.offsetWidth;
+            tableCard.classList.add("live-updated");
+          }
+        } else if (!data && daysData && daysData.length > 0) {
+          // Seed the new cloud room with initial itinerary
+          broadcastCloudSync();
+        }
+      });
+    }
+
+    function broadcastCloudSync() {
+      if (isRemoteUpdating) return;
+      setLocal(V2_STORAGE_KEY, daysData);
+      setLocal(V2_EXP_KEY, expensesData);
+      setLocal(V2_PACK_KEY, packingStatus);
+
+      if (db && isOnline) {
+        updateSyncStatusUI("syncing");
+        const roomRef = db.ref("rooms/" + currentRoomId);
+        roomRef.set({
+          daysData,
+          expensesData,
+          packingStatus,
+          updatedAt: Date.now()
+        }).then(() => {
+          setTimeout(() => updateSyncStatusUI("live"), 300);
+        }).catch((err) => {
+          console.warn("Cloud push error:", err);
+          updateSyncStatusUI("offline");
+        });
+      }
+    }
+
+    // --- MOTION UI: RADIAL WATER RIPPLE ENGINE ---
+    function setupRippleMotion() {
+      document.addEventListener('pointerdown', (e) => {
+        const target = e.target.closest('.btn, .tab-btn, .btn-act-sub, .cloud-sync-pill, .activity-item, .time-chip-btn, .ampm-toggle-btn');
+        if (!target) return;
+        const rect = target.getBoundingClientRect();
+        const circle = document.createElement('span');
+        const diameter = Math.max(rect.width, rect.height);
+        const radius = diameter / 2;
+        circle.style.width = circle.style.height = `${diameter}px`;
+        circle.style.left = `${e.clientX - rect.left - radius}px`;
+        circle.style.top = `${e.clientY - rect.top - radius}px`;
+        circle.classList.add('ripple-wave');
+        const existing = target.querySelector('.ripple-wave');
+        if (existing) existing.remove();
+        target.appendChild(circle);
+        setTimeout(() => circle.remove(), 550);
+      });
+    }
+
+    // --- MOTION UI: CONFETTI PARTICLES ON COMPLETION ---
+    function triggerConfetti(x, y) {
+      const colors = ['#0284c7', '#d97706', '#059669', '#7c3aed', '#f59e0b', '#38bdf8', '#ec4899'];
+      for (let i = 0; i < 22; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-particle';
+        p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        p.style.left = `${x}px`;
+        p.style.top = `${y}px`;
+        document.body.appendChild(p);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 25 + Math.random() * 55;
+        const vx = Math.cos(angle) * velocity;
+        const vy = Math.sin(angle) * velocity - 18;
+
+        p.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${vx}px, ${vy + 40}px) scale(0.3)`, opacity: 0 }
+        ], {
+          duration: 600 + Math.random() * 300,
+          easing: 'cubic-bezier(0.2, 0.9, 0.3, 1)'
+        }).onfinish = () => p.remove();
+      }
+    }
 
     // --- RENDER TABLE ---
     function renderItineraryTable() {
@@ -1744,7 +2074,7 @@
       let totalActs = 0;
       let doneActs = 0;
 
-      tbody.innerHTML = daysData.map(day => {
+      tbody.innerHTML = daysData.map((day, dIdx) => {
         // Ensure activities are sorted chronologically
         day.activities = sortDayActivities(day.activities);
         const acts = day.activities || [];
@@ -1771,7 +2101,7 @@
         const hasSolat = day.note && day.note.toLowerCase().includes("solat");
 
         return `
-          <tr class="row-day" data-dayid="${day.id}">
+          <tr class="row-day" data-dayid="${day.id}" style="animation-delay: ${dIdx * 35}ms;">
             <td class="col-date">
               <span class="date-main">${escapeText(day.date)}</span>
               <span class="date-sub">${escapeText(day.dayName)}</span>
@@ -1819,7 +2149,7 @@
     }
 
     function bindTableEvents() {
-      // Toggle Activity Done Checkbox
+      // Toggle Activity Done Checkbox with Confetti & Spring Bounce
       document.querySelectorAll('.checkbox-act').forEach(cb => {
         cb.addEventListener('change', (e) => {
           const dayId = parseInt(e.target.getAttribute('data-dayid'));
@@ -1829,18 +2159,25 @@
             const act = day.activities.find(a => a.id === actId);
             if (act) {
               act.done = e.target.checked;
-              setLocal(V2_STORAGE_KEY, daysData);
+              broadcastCloudSync();
+              
               const box = document.getElementById(`act-box-${act.id}`);
               if (box) {
-                if (act.done) box.classList.add('completed');
-                else box.classList.remove('completed');
+                if (act.done) {
+                  box.classList.add('completed');
+                  cb.classList.add('check-bounce');
+                  setTimeout(() => cb.classList.remove('check-bounce'), 400);
+                  triggerConfetti(e.clientX || 200, e.clientY || 200);
+                } else {
+                  box.classList.remove('completed');
+                }
               }
               // Update count
               let doneCount = 0;
               let totalCount = 0;
               daysData.forEach(d => (d.activities || []).forEach(a => { totalCount++; if (a.done) doneCount++; }));
               document.getElementById("statProgressText").textContent = `${doneCount} / ${totalCount} Done`;
-              showNotification("Progress saved");
+              showNotification(act.done ? "Activity completed! 🎉" : "Progress saved");
             }
           }
         });
@@ -1871,8 +2208,8 @@
           const actId = tag.getAttribute('data-actid');
           openActModal(dayId, actId);
           setTimeout(() => {
-            const startInput = document.getElementById('actInputStartTime');
-            if (startInput) startInput.focus();
+            const startHour = document.getElementById('actStartHour');
+            if (startHour) startHour.focus();
           }, 150);
         });
       });
@@ -1886,7 +2223,7 @@
             const day = daysData.find(d => d.id === dayId);
             if (day) {
               day.activities = day.activities.filter(a => a.id !== actId);
-              setLocal(V2_STORAGE_KEY, daysData);
+              broadcastCloudSync();
               renderItineraryTable();
               showNotification("Activity deleted");
             }
@@ -1908,7 +2245,7 @@
           const dayId = parseInt(btn.getAttribute('data-dayid'));
           if (confirm(`Delete Day ${dayId}?`)) {
             daysData = daysData.filter(d => d.id !== dayId);
-            setLocal(V2_STORAGE_KEY, daysData);
+            broadcastCloudSync();
             renderItineraryTable();
             showNotification("Day removed");
           }
@@ -2119,6 +2456,40 @@
       document.getElementById("btnEndAm").addEventListener("click", () => setEndAmPm("AM"));
       document.getElementById("btnEndPm").addEventListener("click", () => setEndAmPm("PM"));
 
+      // Collaboration Sync Button & Modal
+      const btnSyncStatus = document.getElementById("btnSyncStatus");
+      if (btnSyncStatus) {
+        btnSyncStatus.addEventListener("click", () => {
+          document.getElementById("modalCollab").classList.add("open");
+        });
+      }
+
+      // Switch Room Button
+      document.getElementById("btnSwitchRoom").addEventListener("click", () => {
+        const val = document.getElementById("inputRoomId").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+        if (val && val !== currentRoomId) {
+          currentRoomId = val;
+          localStorage.setItem("perth_room_id", currentRoomId);
+          updateShareUrl();
+          subscribeToRoom(currentRoomId);
+          showNotification(`Switched to room: ${currentRoomId}`);
+        }
+      });
+
+      // Copy Share Invite Link
+      document.getElementById("btnCopyShare").addEventListener("click", () => {
+        const shareInput = document.getElementById("inputShareUrl");
+        if (shareInput) {
+          navigator.clipboard.writeText(shareInput.value).then(() => {
+            showNotification("Group invite link copied! 📋");
+          }).catch(() => {
+            shareInput.select();
+            document.execCommand('copy');
+            showNotification("Group invite link copied! 📋");
+          });
+        }
+      });
+
       // Save Day Form
       document.getElementById("formDay").addEventListener("submit", (e) => {
         e.preventDefault();
@@ -2143,10 +2514,10 @@
           daysData.push({ id: newId, date, dayName, place, stay, note, activities: [] });
         }
 
-        setLocal(V2_STORAGE_KEY, daysData);
+        broadcastCloudSync();
         document.getElementById("modalDay").classList.remove("open");
         renderItineraryTable();
-        showNotification("Day saved");
+        showNotification("Day saved & synced");
       });
 
       // Save Activity Form (With Auto-Sequencing)
@@ -2192,10 +2563,10 @@
         // Auto-sequence activities chronologically by time
         day.activities = sortDayActivities(day.activities);
 
-        setLocal(V2_STORAGE_KEY, daysData);
+        broadcastCloudSync();
         document.getElementById("modalAct").classList.remove("open");
         renderItineraryTable();
-        showNotification("Activity saved & chronologically arranged");
+        showNotification("Activity saved & synced");
       });
     }
 
@@ -2212,28 +2583,28 @@
       document.getElementById("totalMyrDisplay").textContent = `RM ${totalMyr.toFixed(2)}`;
 
       if (expensesData.length === 0) {
-        container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dim); padding:8px;">No expenses recorded yet.</div>`;
+        container.innerHTML = `<div style="font-size:0.8rem; color:var(--text-dim); text-align:center; padding:10px;">No expenses recorded yet.</div>`;
         return;
       }
 
-      container.innerHTML = expensesData.map((item, idx) => `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card-alt); border:1px solid var(--border-color); padding:7px 10px; border-radius:var(--radius-sm);">
+      container.innerHTML = expensesData.map(item => `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color); font-size:0.85rem;">
           <div>
-            <div style="font-weight:600; font-size:0.84rem;">${escapeText(item.desc)}</div>
-            <div style="font-size:0.72rem; color:var(--text-muted);">${escapeText(item.cat)}</div>
+            <div style="font-weight:600; color:var(--text-main);">${escapeText(item.desc)}</div>
+            <div style="font-size:0.72rem; color:var(--text-dim);">${escapeText(item.cat || 'General')}</div>
           </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-weight:700; color:var(--emerald); font-family:var(--font-mono); font-size:0.85rem;">A$ ${parseFloat(item.aud).toFixed(2)}</span>
-            <button class="btn-act-sub del del-exp" data-index="${idx}"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-family:var(--font-mono); font-weight:700; color:var(--emerald);">A$ ${(parseFloat(item.aud)||0).toFixed(2)}</span>
+            <button class="btn-act-sub del del-exp" data-expid="${item.id}" title="Remove"><svg class="svg-icon"><use href="#icon-trash"></use></svg></button>
           </div>
         </div>
       `).join('');
 
       container.querySelectorAll('.del-exp').forEach(btn => {
         btn.addEventListener('click', () => {
-          const idx = parseInt(btn.getAttribute('data-index'));
-          expensesData.splice(idx, 1);
-          setLocal(V2_EXP_KEY, expensesData);
+          const id = parseInt(btn.getAttribute('data-expid'));
+          expensesData = expensesData.filter(e => e.id !== id);
+          broadcastCloudSync();
           renderExpenses();
           showNotification("Expense removed");
         });
@@ -2241,32 +2612,68 @@
     }
 
     function setupExpenseForm() {
-      const form = document.getElementById("formExpense");
+      const form = document.getElementById("formAddExpense");
       if (!form) return;
+
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-        const desc = document.getElementById("expInputDesc").value.trim();
-        const aud = parseFloat(document.getElementById("expInputAud").value);
-        const cat = document.getElementById("expInputCat").value;
+        const desc = document.getElementById("expDesc").value.trim();
+        const aud = parseFloat(document.getElementById("expAud").value);
+        const cat = document.getElementById("expCat").value;
 
         if (!desc || isNaN(aud)) return;
-        expensesData.unshift({ id: Date.now(), desc, aud, cat });
-        setLocal(V2_EXP_KEY, expensesData);
-        renderExpenses();
+
+        expensesData.push({
+          id: Date.now(),
+          desc,
+          aud,
+          cat
+        });
+
+        broadcastCloudSync();
         form.reset();
-        showNotification("Expense recorded");
+        renderExpenses();
+        showNotification("Expense added & synced");
       });
     }
 
     // --- PACKING LIST ENGINE ---
+    const PACK_DOCS = [
+      "Passport (Valid 6+ months)",
+      "Australian ETA Visa (Approved)",
+      "Flight Tickets (KUL - PER Return)",
+      "International / English Driving License",
+      "Car Rental Booking Voucher",
+      "Credit / Multi-Currency Card (Wise, BigPay)",
+      "Travel Insurance Policy PDF"
+    ];
+
+    const PACK_GEAR = [
+      "Australia Type-I Universal Power Adapter",
+      "Powerbank (20,000 mAh max for cabin)",
+      "Windbreaker / Warm Jacket (Spring: 10-22°C)",
+      "Comfortable Walking / Hiking Shoes",
+      "Sunglasses & UV Sunscreen SPF50+",
+      "Compact Road Trip Backpack",
+      "Refillable Water Bottle"
+    ];
+
+    const PACK_PERSONAL = [
+      "Compact Spray Bottle (for car wudhu)",
+      "Travel Prayer Mat (Sejadah travel)",
+      "Qibla Compass App offline",
+      "Personal Medication & Motion Sickness Pills",
+      "Lip Balm & Moisturizer (Dry WA breeze)"
+    ];
+
     function renderPackingList() {
-      renderPackCat("packListDocs", PACKING_DATA.docs, "docs");
-      renderPackCat("packListGear", PACKING_DATA.gear, "gear");
-      renderPackCat("packListPersonal", PACKING_DATA.personal, "personal");
+      renderPackSection("packListDocs", PACK_DOCS, "docs");
+      renderPackSection("packListGear", PACK_GEAR, "gear");
+      renderPackSection("packListPersonal", PACK_PERSONAL, "pers");
     }
 
-    function renderPackCat(targetId, list, prefix) {
-      const el = document.getElementById(targetId);
+    function renderPackSection(containerId, list, prefix) {
+      const el = document.getElementById(containerId);
       if (!el) return;
 
       el.innerHTML = list.map((item, idx) => {
@@ -2284,7 +2691,8 @@
         cb.addEventListener('change', (e) => {
           const k = e.target.getAttribute('data-key');
           packingStatus[k] = e.target.checked;
-          setLocal(V2_PACK_KEY, packingStatus);
+          if (e.target.checked) triggerConfetti(e.clientX || 200, e.clientY || 200);
+          broadcastCloudSync();
           renderPackingList();
         });
       });
@@ -2361,6 +2769,7 @@
       document.getElementById("btnBackup").addEventListener("click", () => {
         const payload = {
           version: "V2-Table",
+          roomId: currentRoomId,
           timestamp: new Date().toISOString(),
           daysData,
           expensesData,
@@ -2387,22 +2796,14 @@
         r.onload = (evt) => {
           try {
             const data = JSON.parse(evt.target.result);
-            if (data.daysData) {
-              daysData = data.daysData;
-              setLocal(V2_STORAGE_KEY, daysData);
-            }
-            if (data.expensesData) {
-              expensesData = data.expensesData;
-              setLocal(V2_EXP_KEY, expensesData);
-            }
-            if (data.packingStatus) {
-              packingStatus = data.packingStatus;
-              setLocal(V2_PACK_KEY, packingStatus);
-            }
+            if (data.daysData) daysData = data.daysData;
+            if (data.expensesData) expensesData = data.expensesData;
+            if (data.packingStatus) packingStatus = data.packingStatus;
+            broadcastCloudSync();
             renderItineraryTable();
             renderExpenses();
             renderPackingList();
-            showNotification("Data restored successfully!");
+            showNotification("Data restored & synced to cloud!");
           } catch (err) {
             alert("Invalid backup file.");
           }
@@ -2441,7 +2842,6 @@
               showNotification("Installing to your phone... Check home screen in 5-10s! 🎉");
             }
           } else {
-            // Friendly guide for iPhone / Android if prompt isn't directly triggerable
             const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
             if (isIos) {
               alert("📲 To Install on iPhone:\n1. Tap the Share button (square with arrow 📤) at the bottom.\n2. Scroll down and tap 'Add to Home Screen'.\n3. Tap 'Add' in the top right.");
@@ -2456,23 +2856,27 @@
       document.getElementById("btnResetData").addEventListener("click", () => {
         if (confirm("Reset itinerary back to the original Perth Intinerary.docx data?")) {
           daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
-          setLocal(V2_STORAGE_KEY, daysData);
+          broadcastCloudSync();
           renderItineraryTable();
-          showNotification("Reset to original docx");
+          showNotification("Reset to original docx & synced");
         }
       });
     }
 
-    // Initialize App & Register Service Worker
+    // Initialize App, Ripple Motion & Realtime Sync
     document.addEventListener("DOMContentLoaded", () => {
       setupTheme();
       setupNavTabs();
       setupModals();
       setupExpenseForm();
       setupGlobalActions();
+      setupRippleMotion();
       renderItineraryTable();
       renderExpenses();
       renderPackingList();
+
+      // Initialize Realtime Multi-User Cloud Synchronization
+      initCollaborativeSync();
 
       // Register PWA Service Worker
       if ('serviceWorker' in navigator) {

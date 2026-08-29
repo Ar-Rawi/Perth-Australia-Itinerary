@@ -1,4 +1,4 @@
-const CACHE_NAME = 'perth-itinerary-v4';
+const CACHE_NAME = 'perth-itinerary-v5';
 const ASSETS = [
   './',
   './index.html',
