@@ -1889,7 +1889,30 @@
     const V2_EXP_KEY = "perth_itinerary_v2_expenses";
     const V2_PACK_KEY = "perth_itinerary_v2_packing";
     const V2_THEME_KEY = "perth_itinerary_v2_theme";
+
+    function getLocal(key, def) {
+      try {
+        const val = localStorage.getItem(key);
+        return val ? JSON.parse(val) : def;
+      } catch (e) {
+        return def;
+      }
+    }
+
+    function setLocal(key, val) {
+      try {
+        localStorage.setItem(key, JSON.stringify(val));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
     let daysData = getLocal(V2_STORAGE_KEY, JSON.parse(JSON.stringify(INITIAL_DOCX_DATA)));
+    if (!daysData || !Array.isArray(daysData) || daysData.length === 0) {
+      daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
+      setLocal(V2_STORAGE_KEY, daysData);
+    }
+
     let expensesData = getLocal(V2_EXP_KEY, [
       { id: 1, desc: "Car Rental & Airport Fee", aud: 520, cat: "Transport" },
       { id: 2, desc: "Rottnest Express Ferry (2 Pax)", aud: 170, cat: "Tickets" }
@@ -1968,11 +1991,11 @@
 
       roomRef.on("value", (snapshot) => {
         const data = snapshot.val();
-        if (data && data.daysData) {
+        if (data && data.daysData && Array.isArray(data.daysData) && data.daysData.length > 0) {
           isRemoteUpdating = true;
           daysData = data.daysData;
-          if (data.expensesData) expensesData = data.expensesData;
-          if (data.packingStatus) packingStatus = data.packingStatus;
+          if (data.expensesData && Array.isArray(data.expensesData)) expensesData = data.expensesData;
+          if (data.packingStatus && typeof data.packingStatus === "object") packingStatus = data.packingStatus;
 
           setLocal(V2_STORAGE_KEY, daysData);
           setLocal(V2_EXP_KEY, expensesData);
@@ -1990,9 +2013,16 @@
             void tableCard.offsetWidth;
             tableCard.classList.add("live-updated");
           }
-        } else if (!data && daysData && daysData.length > 0) {
-          // Seed the new cloud room with initial itinerary
+        } else {
+          // If cloud data is empty, ensure local data exists and seed cloud
+          if (!daysData || !Array.isArray(daysData) || daysData.length === 0) {
+            daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
+            setLocal(V2_STORAGE_KEY, daysData);
+          }
           broadcastCloudSync();
+          renderItineraryTable();
+          renderExpenses();
+          renderPackingList();
         }
       });
     }
