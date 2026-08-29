@@ -1328,10 +1328,6 @@
           <svg class="svg-icon"><use href="#icon-plus"></use></svg>
           <span>Add Day</span>
         </button>
-        <button class="btn btn-outline" id="btnInstallApp" title="Install as Mobile App">
-          <svg class="svg-icon"><use href="#icon-download"></use></svg>
-          <span>Install</span>
-        </button>
         <button class="btn btn-outline" id="btnPrintPdf" title="Print A4 PDF">
           <svg class="svg-icon"><use href="#icon-printer"></use></svg>
           <span>Print</span>
@@ -2858,47 +2854,6 @@
             }
           };
           r.readAsText(file);
-        });
-      }
-
-      // PWA Install Prompt Handling
-      let deferredInstallPrompt = null;
-      const installBtn = document.getElementById("btnInstallApp");
-      
-      window.addEventListener("beforeinstallprompt", (e) => {
-        e.preventDefault();
-        deferredInstallPrompt = e;
-        if (installBtn) {
-          installBtn.style.display = "inline-flex";
-          installBtn.classList.add("btn-primary");
-          installBtn.classList.remove("btn-outline");
-        }
-      });
-
-      window.addEventListener("appinstalled", () => {
-        deferredInstallPrompt = null;
-        if (installBtn) installBtn.style.display = "none";
-        showNotification("App installed on your home screen! 🎉");
-      });
-
-      if (installBtn) {
-        installBtn.addEventListener("click", async () => {
-          if (deferredInstallPrompt) {
-            deferredInstallPrompt.prompt();
-            const { outcome } = await deferredInstallPrompt.userChoice;
-            if (outcome === "accepted") {
-              deferredInstallPrompt = null;
-              installBtn.style.display = "none";
-              showNotification("Installing to your phone... Check home screen in 5-10s! 🎉");
-            }
-          } else {
-            const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-            if (isIos) {
-              alert("📲 To Install on iPhone:\n1. Tap the Share button (square with arrow 📤) at the bottom.\n2. Scroll down and tap 'Add to Home Screen'.\n3. Tap 'Add' in the top right.");
-            } else {
-              alert("📲 To Install on Mobile:\n1. Tap the 3-dot menu (⋮) in Chrome.\n2. Tap 'Install app' or 'Add to Home screen'.\n3. Wait a few seconds while Android adds the icon.");
-            }
-          }
         });
       }
 
