@@ -1,4 +1,4 @@
-const CACHE_NAME = 'perth-itinerary-v6';
+const CACHE_NAME = 'perth-itinerary-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -18,7 +18,7 @@ self.addEventListener('install', (e) => {
         try {
           await cache.add(asset);
         } catch (err) {
-          console.warn('Cache warning:', asset, err);
+          console.warn('Cache pre-fetch note:', asset, err);
         }
       }
     })
@@ -37,17 +37,37 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+// Network-First for HTML/Navigation, Cache-First for static assets
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(e.request).then((res) => {
-        if (res && res.status === 200 && res.type === 'basic') {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
-        }
-        return res;
-      }).catch(() => caches.match('./index.html') || caches.match('./'));
-    })
-  );
+  const isHtml = e.request.mode === 'navigate' || 
+                 e.request.url.endsWith('.html') || 
+                 e.request.url.endsWith('/') || 
+                 (e.request.headers.get('accept') && e.request.headers.get('accept').includes('text/html'));
+
+  if (isHtml) {
+    e.respondWith(
+      fetch(e.request)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request).then((cached) => cached || caches.match('./index.html') || caches.match('./')))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(e.request).then((res) => {
+          if (res && res.status === 200 && res.type === 'basic') {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
+          }
+          return res;
+        });
+      })
+    );
+  }
 });

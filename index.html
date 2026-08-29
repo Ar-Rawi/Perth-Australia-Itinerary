@@ -2173,7 +2173,8 @@
         `;
       }).join('');
 
-      document.getElementById("statProgressText").textContent = `${doneActs} / ${totalActs} Done`;
+      const statEl = document.getElementById("statProgressText");
+      if (statEl) statEl.textContent = `${doneActs} / ${totalActs} Done`;
 
       bindTableEvents();
     }
@@ -2206,7 +2207,8 @@
               let doneCount = 0;
               let totalCount = 0;
               daysData.forEach(d => (d.activities || []).forEach(a => { totalCount++; if (a.done) doneCount++; }));
-              document.getElementById("statProgressText").textContent = `${doneCount} / ${totalCount} Done`;
+              const statEl2 = document.getElementById("statProgressText");
+              if (statEl2) statEl2.textContent = `${doneCount} / ${totalCount} Done`;
               showNotification(act.done ? "Activity completed! 🎉" : "Progress saved");
             }
           }
@@ -2642,14 +2644,18 @@
     }
 
     function setupExpenseForm() {
-      const form = document.getElementById("formAddExpense");
+      const form = document.getElementById("formExpense");
       if (!form) return;
 
       form.addEventListener("submit", (e) => {
         e.preventDefault();
-        const desc = document.getElementById("expDesc").value.trim();
-        const aud = parseFloat(document.getElementById("expAud").value);
-        const cat = document.getElementById("expCat").value;
+        const descInput = document.getElementById("expInputDesc");
+        const audInput = document.getElementById("expInputAud");
+        const catInput = document.getElementById("expInputCat");
+
+        const desc = descInput ? descInput.value.trim() : "";
+        const aud = audInput ? parseFloat(audInput.value) : NaN;
+        const cat = catInput ? catInput.value : "Other";
 
         if (!desc || isNaN(aud)) return;
 
@@ -2748,13 +2754,16 @@
       document.documentElement.setAttribute("data-theme", savedTheme);
       updateThemeIcon(savedTheme);
 
-      document.getElementById("btnThemeToggle").addEventListener("click", () => {
-        const cur = document.documentElement.getAttribute("data-theme") || "dark";
-        const next = cur === "dark" ? "light" : "dark";
-        document.documentElement.setAttribute("data-theme", next);
-        localStorage.setItem(V2_THEME_KEY, next);
-        updateThemeIcon(next);
-      });
+      const themeBtn = document.getElementById("btnThemeToggle");
+      if (themeBtn) {
+        themeBtn.addEventListener("click", () => {
+          const cur = document.documentElement.getAttribute("data-theme") || "dark";
+          const next = cur === "dark" ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", next);
+          localStorage.setItem(V2_THEME_KEY, next);
+          updateThemeIcon(next);
+        });
+      }
     }
 
     function updateThemeIcon(theme) {
@@ -2786,60 +2795,71 @@
 
     function setupGlobalActions() {
       // Add Day from Header
-      document.getElementById("btnHeaderAddDay").addEventListener("click", () => {
-        openDayModal(null);
-      });
+      const btnAddDay = document.getElementById("btnHeaderAddDay");
+      if (btnAddDay) {
+        btnAddDay.addEventListener("click", () => {
+          openDayModal(null);
+        });
+      }
 
       // Print PDF
-      document.getElementById("btnPrintPdf").addEventListener("click", () => {
-        window.print();
-      });
+      const btnPrint = document.getElementById("btnPrintPdf");
+      if (btnPrint) {
+        btnPrint.addEventListener("click", () => {
+          window.print();
+        });
+      }
 
       // Backup JSON
-      document.getElementById("btnBackup").addEventListener("click", () => {
-        const payload = {
-          version: "V2-Table",
-          roomId: currentRoomId,
-          timestamp: new Date().toISOString(),
-          daysData,
-          expensesData,
-          packingStatus
-        };
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `Perth_Itinerary_V2_Backup_${new Date().toISOString().slice(0,10)}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-        showNotification("Backup JSON downloaded");
-      });
+      const btnBackup = document.getElementById("btnBackup");
+      if (btnBackup) {
+        btnBackup.addEventListener("click", () => {
+          const payload = {
+            version: "V2-Table",
+            roomId: currentRoomId,
+            timestamp: new Date().toISOString(),
+            daysData,
+            expensesData,
+            packingStatus
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `Perth_Itinerary_V2_Backup_${new Date().toISOString().slice(0,10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showNotification("Backup JSON downloaded");
+        });
+      }
 
       // Restore JSON
       const restoreBtn = document.getElementById("btnRestore");
       const fileInput = document.getElementById("importFileInput");
-      restoreBtn.addEventListener("click", () => fileInput.click());
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const r = new FileReader();
-        r.onload = (evt) => {
-          try {
-            const data = JSON.parse(evt.target.result);
-            if (data.daysData) daysData = data.daysData;
-            if (data.expensesData) expensesData = data.expensesData;
-            if (data.packingStatus) packingStatus = data.packingStatus;
-            broadcastCloudSync();
-            renderItineraryTable();
-            renderExpenses();
-            renderPackingList();
-            showNotification("Data restored & synced to cloud!");
-          } catch (err) {
-            alert("Invalid backup file.");
-          }
-        };
-        r.readAsText(file);
-      });
+      if (restoreBtn && fileInput) {
+        restoreBtn.addEventListener("click", () => fileInput.click());
+        fileInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const r = new FileReader();
+          r.onload = (evt) => {
+            try {
+              const data = JSON.parse(evt.target.result);
+              if (data.daysData) daysData = data.daysData;
+              if (data.expensesData) expensesData = data.expensesData;
+              if (data.packingStatus) packingStatus = data.packingStatus;
+              broadcastCloudSync();
+              renderItineraryTable();
+              renderExpenses();
+              renderPackingList();
+              showNotification("Data restored & synced to cloud!");
+            } catch (err) {
+              alert("Invalid backup file.");
+            }
+          };
+          r.readAsText(file);
+        });
+      }
 
       // PWA Install Prompt Handling
       let deferredInstallPrompt = null;
@@ -2883,18 +2903,21 @@
       }
 
       // Reset to Original Docx
-      document.getElementById("btnResetData").addEventListener("click", () => {
-        if (confirm("Reset itinerary back to the original Perth Intinerary.docx data?")) {
-          daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
-          broadcastCloudSync();
-          renderItineraryTable();
-          showNotification("Reset to original docx & synced");
-        }
-      });
+      const btnReset = document.getElementById("btnResetData");
+      if (btnReset) {
+        btnReset.addEventListener("click", () => {
+          if (confirm("Reset itinerary back to the original Perth Intinerary.docx data?")) {
+            daysData = JSON.parse(JSON.stringify(INITIAL_DOCX_DATA));
+            broadcastCloudSync();
+            renderItineraryTable();
+            showNotification("Reset to original docx & synced");
+          }
+        });
+      }
     }
 
-    // Initialize App, Ripple Motion & Realtime Sync
-    document.addEventListener("DOMContentLoaded", () => {
+    // Direct Bootloader: Guarantees immediate execution on all devices
+    function bootApp() {
       setupTheme();
       setupNavTabs();
       setupModals();
@@ -2908,13 +2931,22 @@
       // Initialize Realtime Multi-User Cloud Synchronization
       initCollaborativeSync();
 
-      // Register PWA Service Worker
+      // Register PWA Service Worker with auto-update
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .then((reg) => console.log('PWA Service Worker registered with scope:', reg.scope))
+          .then((reg) => {
+            reg.update();
+            console.log('PWA Service Worker registered with scope:', reg.scope);
+          })
           .catch((err) => console.log('SW registration note:', err));
       }
-    });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bootApp);
+    } else {
+      bootApp();
+    }
   </script>
 </body>
 </html>
